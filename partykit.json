@@ -1,0 +1,5 @@
+{
+  "name": "rummy-500",
+  "main": "src/party/game.ts",
+  "compatibilityDate": "2023-10-01"
+}

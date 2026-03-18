@@ -1,0 +1,158 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base ────────────────────────────────────────────────── */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+body {
+  background: #0a0a1a;
+  font-family: 'Press Start 2P', monospace;
+  color: #e2e8f0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Animated Plasma Background ──────────────────────────── */
+
+.game-bg {
+  position: fixed;
+  inset: 0;
+  background: #0a0a1a;
+  z-index: 0;
+}
+
+.game-bg::before {
+  content: '';
+  position: fixed;
+  inset: -30%;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(124, 58, 237, 0.4) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 20%, rgba(59, 130, 246, 0.35) 0%, transparent 55%),
+    radial-gradient(ellipse at 60% 85%, rgba(236, 72, 153, 0.25) 0%, transparent 50%),
+    radial-gradient(ellipse at 10% 10%, rgba(52, 211, 153, 0.15) 0%, transparent 40%);
+  animation: plasma 12s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes plasma {
+  0%   { transform: scale(1) rotate(0deg); }
+  33%  { transform: scale(1.08) rotate(4deg); }
+  66%  { transform: scale(1.12) rotate(-3deg); }
+  100% { transform: scale(1.15) rotate(8deg); }
+}
+
+/* ── CRT Scanlines ───────────────────────────────────────── */
+
+.scanlines::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.10) 2px,
+    rgba(0, 0, 0, 0.10) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ── App layout ──────────────────────────────────────────── */
+
+.app-root {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Neon text glow ─────────────────────────────────────── */
+
+.neon-purple {
+  color: #a855f7;
+  text-shadow: 0 0 6px rgba(168,85,247,0.9), 0 0 16px rgba(168,85,247,0.5);
+}
+.neon-blue {
+  color: #60a5fa;
+  text-shadow: 0 0 6px rgba(96,165,250,0.9), 0 0 16px rgba(96,165,250,0.5);
+}
+.neon-red {
+  color: #f87171;
+  text-shadow: 0 0 6px rgba(248,113,113,0.9), 0 0 16px rgba(248,113,113,0.5);
+}
+.neon-teal {
+  color: #34d399;
+  text-shadow: 0 0 6px rgba(52,211,153,0.9), 0 0 16px rgba(52,211,153,0.5);
+}
+.neon-pink {
+  color: #f472b6;
+  text-shadow: 0 0 6px rgba(244,114,182,0.9), 0 0 16px rgba(244,114,182,0.5);
+}
+
+/* ── Neon button ─────────────────────────────────────────── */
+
+.btn-neon {
+  background: transparent;
+  border: 2px solid #a855f7;
+  color: #a855f7;
+  padding: 8px 16px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  box-shadow: 0 0 8px rgba(168,85,247,0.4), inset 0 0 8px rgba(168,85,247,0.1);
+}
+
+.btn-neon:hover:not(:disabled) {
+  background: rgba(168, 85, 247, 0.15);
+  box-shadow: 0 0 16px rgba(168,85,247,0.7), inset 0 0 12px rgba(168,85,247,0.2);
+  transform: translateY(-1px);
+}
+
+.btn-neon:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.btn-neon-blue {
+  border-color: #60a5fa;
+  color: #60a5fa;
+  box-shadow: 0 0 8px rgba(96,165,250,0.4), inset 0 0 8px rgba(96,165,250,0.1);
+}
+
+.btn-neon-blue:hover:not(:disabled) {
+  background: rgba(96, 165, 250, 0.15);
+  box-shadow: 0 0 16px rgba(96,165,250,0.7);
+}
+
+.btn-neon-green {
+  border-color: #34d399;
+  color: #34d399;
+  box-shadow: 0 0 8px rgba(52,211,153,0.4), inset 0 0 8px rgba(52,211,153,0.1);
+}
+
+.btn-neon-green:hover:not(:disabled) {
+  background: rgba(52, 211, 153, 0.15);
+  box-shadow: 0 0 16px rgba(52,211,153,0.7);
+}
+
+/* ── Scrollbar ───────────────────────────────────────────── */
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+::-webkit-scrollbar-thumb { background: rgba(168,85,247,0.5); border-radius: 2px; }

@@ -1,0 +1,134 @@
+/* ── Card base ───────────────────────────────────────────── */
+
+.card {
+  position: relative;
+  border-radius: 8px;
+  background: linear-gradient(145deg, #1e1b4b 0%, #13103a 100%);
+  border: 1.5px solid rgba(168, 85, 247, 0.35);
+  box-shadow: 0 0 10px rgba(168,85,247,0.3), 0 4px 12px rgba(0,0,0,0.5);
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  flex-shrink: 0;
+}
+
+.card:hover {
+  box-shadow: 0 0 18px rgba(168,85,247,0.6), 0 6px 18px rgba(0,0,0,0.6);
+}
+
+.card.selected {
+  border-color: rgba(52, 211, 153, 0.8);
+  box-shadow: 0 0 16px rgba(52,211,153,0.6), 0 6px 18px rgba(0,0,0,0.6);
+  transform: translateY(-12px);
+}
+
+.card.drawn-card {
+  border-color: rgba(251, 191, 36, 0.8);
+  box-shadow: 0 0 16px rgba(251,191,36,0.6);
+}
+
+/* ── Holographic shimmer overlay ────────────────────────── */
+
+.card-shimmer {
+  position: absolute;
+  inset: -100%;
+  background: conic-gradient(
+    from 0deg at 50% 50%,
+    transparent 0deg,
+    rgba(255, 255, 255, 0.06) 60deg,
+    rgba(168, 85, 247, 0.08) 120deg,
+    rgba(59, 130, 246, 0.06) 180deg,
+    rgba(52, 211, 153, 0.04) 240deg,
+    transparent 300deg
+  );
+  animation: cardShimmer 3s linear infinite;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.card:hover .card-shimmer {
+  opacity: 1;
+}
+
+.card.selected .card-shimmer {
+  opacity: 0.7;
+}
+
+@keyframes cardShimmer {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Card content ────────────────────────────────────────── */
+
+.card-inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 4px 5px;
+}
+
+.card-rank {
+  font-family: 'Press Start 2P', monospace;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.card-suit-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  line-height: 1;
+  opacity: 0.25;
+}
+
+.card-suit-small {
+  line-height: 1;
+}
+
+/* Suit colors */
+.suit-red {
+  color: #f87171;
+  text-shadow: 0 0 6px rgba(248,113,113,0.8), 0 0 14px rgba(248,113,113,0.4);
+}
+
+.suit-black {
+  color: #34d399;
+  text-shadow: 0 0 6px rgba(52,211,153,0.8), 0 0 14px rgba(52,211,153,0.4);
+}
+
+/* ── Card back ───────────────────────────────────────────── */
+
+.card-back {
+  background: linear-gradient(145deg, #1a1040 0%, #0f0c2a 100%);
+  border: 1.5px solid rgba(168, 85, 247, 0.25);
+}
+
+.card-back-pattern {
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(168,85,247,0.2);
+  border-radius: 4px;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgba(168,85,247,0.05) 0px,
+      rgba(168,85,247,0.05) 2px,
+      transparent 2px,
+      transparent 8px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      rgba(59,130,246,0.05) 0px,
+      rgba(59,130,246,0.05) 2px,
+      transparent 2px,
+      transparent 8px
+    );
+}
