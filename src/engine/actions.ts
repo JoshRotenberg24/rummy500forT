@@ -66,6 +66,9 @@ export function applyAction(state: GameState, action: GameAction): GameState {
       const remainingPile = discardPile.slice(0, idx); // everything below
       const drawnCard = takenCards[0];                  // the card they selected
 
+      // Taking only the top card = free draw, no meld required (same as deck)
+      const takingTopOnly = idx === discardPile.length - 1;
+
       return {
         ...state,
         discardPile: remainingPile,
@@ -79,8 +82,8 @@ export function applyAction(state: GameState, action: GameAction): GameState {
         turn: {
           ...turn,
           phase: 'play',
-          drawnFromDiscard: true,
-          drawnCard, // only this card must be melded before discarding
+          drawnFromDiscard: !takingTopOnly,
+          drawnCard: takingTopOnly ? null : drawnCard,
         },
       };
     }

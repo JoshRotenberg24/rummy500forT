@@ -64,8 +64,8 @@ export function DrawArea() {
           ) : (
             <div className="relative flex-shrink-0" style={{ width: fanWidth, height: DISCARD_CARD_H }}>
               {discardPile.map((card, i) => {
-                const meldable = canMeld(hand, discardPile, i, melds);
                 const isTop = i === discardPile.length - 1;
+                const meldable = isTop || canMeld(hand, discardPile, i, melds);
                 const clickable = canDraw && meldable;
                 return (
                   <div
