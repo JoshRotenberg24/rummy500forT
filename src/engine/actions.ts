@@ -83,7 +83,9 @@ export function applyAction(state: GameState, action: GameAction): GameState {
           ...turn,
           phase: 'play',
           drawnFromDiscard: !takingTopOnly,
-          drawnCard: takingTopOnly ? null : drawnCard,
+          // Always track drawnCard so same card can't be discarded same turn.
+          // For top-card draws: no meld required, but can't immediately discard it back.
+          drawnCard,
         },
       };
     }
@@ -178,8 +180,13 @@ export function applyAction(state: GameState, action: GameAction): GameState {
     case 'DISCARD': {
       if (turn.phase !== 'play' && turn.phase !== 'discard') return state;
 
-      // Block discard if drawnCard has not been melded yet
+      // Block discard if deep-drawn card has not been melded yet
       if (turn.drawnFromDiscard && turn.drawnCard) {
+        return state;
+      }
+      // Block discarding the exact card drawn from the discard pile on the same turn
+      // (applies to both deep draws and top-card draws — can't immediately discard it back)
+      if (turn.drawnCard && action.cardId === turn.drawnCard.id) {
         return state;
       }
 
