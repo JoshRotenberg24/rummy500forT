@@ -16,9 +16,9 @@ export function PlayerHand() {
   const isMyTurn = activePlayer === 'player';
   const canSelect = isMyTurn && (phase === 'play' || phase === 'discard');
 
-  // Local display order for drag-to-reorder
   const [orderedIds, setOrderedIds] = useState<string[]>(() => hand.map(c => c.id));
   const dragSrcIdx = useRef<number | null>(null);
+  const dragOverIdx = useRef<number | null>(null);
 
   useEffect(() => {
     setOrderedIds(prev => {
@@ -42,30 +42,37 @@ export function PlayerHand() {
     }
   }
 
-  function handleDragStart(i: number) {
-    dragSrcIdx.current = i;
+  // Container-level drag handlers — calculate target from mouse X position
+  function handleContainerDragOver(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    dragOverIdx.current = Math.max(0, Math.min(orderedHand.length - 1, Math.floor(x / OVERLAP)));
   }
 
-  function handleDragOver(e: React.DragEvent, i: number) {
+  function handleContainerDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
     const src = dragSrcIdx.current;
-    if (src === null || src === i) return;
+    const target = dragOverIdx.current;
+    if (src === null || target === null || src === target) return;
     const newOrder = [...orderedIds];
     const [moved] = newOrder.splice(src, 1);
-    newOrder.splice(i, 0, moved);
-    dragSrcIdx.current = i;
+    newOrder.splice(target, 0, moved);
     setOrderedIds(newOrder);
-  }
-
-  function handleDragEnd() {
     dragSrcIdx.current = null;
+    dragOverIdx.current = null;
   }
 
   const totalWidth = orderedHand.length > 0 ? OVERLAP * (orderedHand.length - 1) + CARD_WIDTH : 0;
 
   return (
     <div className="relative flex flex-col items-center" style={{ minHeight: CARD_HEIGHT + 34 }}>
-      <div className="relative" style={{ width: totalWidth, height: CARD_HEIGHT }}>
+      <div
+        className="relative"
+        style={{ width: totalWidth, height: CARD_HEIGHT }}
+        onDragOver={handleContainerDragOver}
+        onDrop={handleContainerDrop}
+      >
         {orderedHand.map((card, i) => {
           const selected = isSelected(card.id);
           const isDrawn = drawnCard?.id === card.id;
@@ -73,9 +80,8 @@ export function PlayerHand() {
             <div
               key={card.id}
               draggable
-              onDragStart={() => handleDragStart(i)}
-              onDragOver={e => handleDragOver(e, i)}
-              onDragEnd={handleDragEnd}
+              onDragStart={() => { dragSrcIdx.current = i; }}
+              onDragEnd={() => { dragSrcIdx.current = null; dragOverIdx.current = null; }}
               style={{
                 position: 'absolute',
                 left: i * OVERLAP,

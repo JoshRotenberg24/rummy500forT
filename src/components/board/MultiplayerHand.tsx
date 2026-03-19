@@ -45,24 +45,38 @@ export function MultiplayerHand({ hand, isMyTurn, phase, selectedCards, drawnCar
     }
   }
 
-  function handleDragStart(i: number) { dragSrcIdx.current = i; }
-  function handleDragOver(e: React.DragEvent, i: number) {
+  const dragOverIdx = useRef<number | null>(null);
+
+  function handleContainerDragOver(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    dragOverIdx.current = Math.max(0, Math.min(orderedHand.length - 1, Math.floor(x / OVERLAP)));
+  }
+
+  function handleContainerDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
     const src = dragSrcIdx.current;
-    if (src === null || src === i) return;
+    const target = dragOverIdx.current;
+    if (src === null || target === null || src === target) return;
     const newOrder = [...orderedIds];
     const [moved] = newOrder.splice(src, 1);
-    newOrder.splice(i, 0, moved);
-    dragSrcIdx.current = i;
+    newOrder.splice(target, 0, moved);
     setOrderedIds(newOrder);
+    dragSrcIdx.current = null;
+    dragOverIdx.current = null;
   }
-  function handleDragEnd() { dragSrcIdx.current = null; }
 
   const totalWidth = orderedHand.length > 0 ? OVERLAP * (orderedHand.length - 1) + CARD_WIDTH : 0;
 
   return (
     <div className="relative flex flex-col items-center" style={{ minHeight: CARD_HEIGHT + 34 }}>
-      <div className="relative" style={{ width: totalWidth, height: CARD_HEIGHT }}>
+      <div
+        className="relative"
+        style={{ width: totalWidth, height: CARD_HEIGHT }}
+        onDragOver={handleContainerDragOver}
+        onDrop={handleContainerDrop}
+      >
         {orderedHand.map((card, i) => {
           const selected = isSelected(card.id);
           const isDrawn = drawnCard?.id === card.id;
@@ -70,9 +84,8 @@ export function MultiplayerHand({ hand, isMyTurn, phase, selectedCards, drawnCar
             <div
               key={card.id}
               draggable
-              onDragStart={() => handleDragStart(i)}
-              onDragOver={e => handleDragOver(e, i)}
-              onDragEnd={handleDragEnd}
+              onDragStart={() => { dragSrcIdx.current = i; }}
+              onDragEnd={() => { dragSrcIdx.current = null; dragOverIdx.current = null; }}
               style={{
                 position: 'absolute',
                 left: i * OVERLAP,

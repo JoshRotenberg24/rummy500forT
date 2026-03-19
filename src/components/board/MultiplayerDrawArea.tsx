@@ -1,9 +1,21 @@
-import { useState } from 'react';
 import { useMultiplayerStore } from '../../store/multiplayerStore';
-import { Card as CardType, PlayerId, GamePhase } from '../../engine/types';
+import { findValidMelds, canExtendMeld } from '../../engine/meld';
+import { Card as CardType, Meld, PlayerId, GamePhase } from '../../engine/types';
 import { Card } from '../card/Card';
 import { CardBack } from '../card/CardBack';
-import { MultiplayerDiscardPickerOverlay } from '../overlays/MultiplayerDiscardPickerOverlay';
+
+const DISCARD_OVERLAP = 18;
+const DISCARD_CARD_W = 48;
+const DISCARD_CARD_H = 68;
+
+function canMeld(hand: CardType[], discardPile: CardType[], targetIdx: number, melds: Meld[]): boolean {
+  const takenCards = discardPile.slice(targetIdx);
+  const targetCard = takenCards[0];
+  const combined = [...hand, ...takenCards];
+  const newMelds = findValidMelds(combined);
+  if (newMelds.some(m => m.some(c => c.id === targetCard.id))) return true;
+  return melds.some(m => canExtendMeld(m, [targetCard]));
+}
 
 interface Props {
   deck: CardType[];
@@ -11,92 +23,83 @@ interface Props {
   isMyTurn: boolean;
   myPlayerId: PlayerId;
   phase: GamePhase;
+  melds: Meld[];
+  hand: CardType[];
 }
 
-export function MultiplayerDrawArea({ deck, discardPile, isMyTurn, myPlayerId, phase }: Props) {
+export function MultiplayerDrawArea({ deck, discardPile, isMyTurn, phase, melds, hand }: Props) {
   const dispatch = useMultiplayerStore(s => s.dispatch);
-  const [showPicker, setShowPicker] = useState(false);
 
   const canDraw = isMyTurn && phase === 'draw';
-  const topDiscard = discardPile[discardPile.length - 1];
 
-  function handleDrawDeck() {
-    if (!canDraw) return;
-    dispatch({ type: 'DRAW_FROM_DECK' });
-  }
-
-  function handleDiscardClick() {
-    if (!canDraw || discardPile.length === 0) return;
-    if (discardPile.length === 1) {
-      dispatch({ type: 'DRAW_FROM_DISCARD', cardId: topDiscard.id });
-    } else {
-      setShowPicker(true);
-    }
-  }
+  const fanWidth = discardPile.length > 0
+    ? DISCARD_OVERLAP * (discardPile.length - 1) + DISCARD_CARD_W
+    : DISCARD_CARD_W;
 
   return (
-    <>
-      <div className="flex items-center justify-center gap-6 py-2">
-        {/* Draw pile */}
-        <div className="flex flex-col items-center gap-1">
+    <div className="flex items-center gap-4 px-3 py-2">
+      {/* Deck */}
+      <div className="flex flex-col items-center gap-1 flex-shrink-0">
+        <div
+          className={`relative ${canDraw ? 'cursor-pointer' : 'cursor-default'}`}
+          onClick={() => canDraw && dispatch({ type: 'DRAW_FROM_DECK' })}
+        >
+          <CardBack size="md" />
           <div
-            className={`relative ${canDraw ? 'cursor-pointer' : 'cursor-default'}`}
-            onClick={handleDrawDeck}
+            className="absolute -top-2 -right-2 bg-purple-900 border border-purple-500 rounded-full text-[7px] neon-purple px-1.5 py-0.5"
+            style={{ minWidth: 20, textAlign: 'center' }}
           >
-            <CardBack size="md" />
-            <div
-              className="absolute -top-2 -right-2 bg-purple-900 border border-purple-500 rounded-full text-[7px] neon-purple px-1.5 py-0.5"
-              style={{ minWidth: 20, textAlign: 'center' }}
-            >
-              {deck.length}
-            </div>
-            {canDraw && (
-              <div className="absolute inset-0 rounded-lg ring-2 ring-purple-500 ring-opacity-60 animate-pulse" />
-            )}
+            {deck.length}
           </div>
-          <span className="text-[6px] text-gray-500">DECK</span>
+          {canDraw && (
+            <div className="absolute inset-0 rounded-lg ring-2 ring-purple-500 ring-opacity-60 animate-pulse" />
+          )}
         </div>
-
-        {/* Discard pile */}
-        <div className="flex flex-col items-center gap-1">
-          <div
-            className={`relative ${canDraw && discardPile.length > 0 ? 'cursor-pointer' : 'cursor-default'}`}
-            onClick={handleDiscardClick}
-          >
-            {topDiscard ? (
-              <>
-                <Card card={topDiscard} size="md" disabled={!canDraw} />
-                {canDraw && (
-                  <div className="absolute inset-0 rounded-lg ring-2 ring-blue-400 ring-opacity-60 animate-pulse" />
-                )}
-              </>
-            ) : (
-              <div
-                className="rounded-lg border-2 border-dashed border-gray-700 flex items-center justify-center"
-                style={{ width: 62, height: 88 }}
-              >
-                <span className="text-gray-600 text-lg">∅</span>
-              </div>
-            )}
-            {discardPile.length > 1 && (
-              <div
-                className="absolute -top-2 -right-2 bg-blue-900 border border-blue-500 rounded-full text-[7px] neon-blue px-1.5 py-0.5"
-                style={{ minWidth: 20, textAlign: 'center' }}
-              >
-                {discardPile.length}
-              </div>
-            )}
-          </div>
-          <span className="text-[6px] text-gray-500">DISCARD</span>
-        </div>
+        <span className="text-[6px] text-gray-500">DECK</span>
       </div>
 
-      {showPicker && (
-        <MultiplayerDiscardPickerOverlay
-          discardPile={discardPile}
-          onClose={() => setShowPicker(false)}
-        />
-      )}
-    </>
+      {/* Discard pile — fanned inline */}
+      <div className="flex flex-col gap-1">
+        <div className="overflow-x-auto" style={{ maxWidth: 'min(50vw, 260px)' }}>
+          {discardPile.length === 0 ? (
+            <div
+              className="rounded-lg border-2 border-dashed border-gray-700 flex items-center justify-center flex-shrink-0"
+              style={{ width: DISCARD_CARD_W, height: DISCARD_CARD_H }}
+            >
+              <span className="text-gray-600">∅</span>
+            </div>
+          ) : (
+            <div className="relative flex-shrink-0" style={{ width: fanWidth, height: DISCARD_CARD_H }}>
+              {discardPile.map((card, i) => {
+                const meldable = canMeld(hand, discardPile, i, melds);
+                const isTop = i === discardPile.length - 1;
+                const clickable = canDraw && meldable;
+                return (
+                  <div
+                    key={card.id}
+                    style={{ position: 'absolute', left: i * DISCARD_OVERLAP, top: 0, zIndex: i + 1 }}
+                    className={clickable ? 'cursor-pointer' : 'cursor-default'}
+                    onClick={() => clickable && dispatch({ type: 'DRAW_FROM_DISCARD', cardId: card.id })}
+                  >
+                    <Card
+                      card={card}
+                      size="sm"
+                      disabled={!clickable}
+                      style={canDraw && !meldable ? { opacity: 0.4 } : undefined}
+                    />
+                    {clickable && isTop && (
+                      <div className="absolute inset-0 rounded-lg ring-2 ring-blue-400 ring-opacity-60 animate-pulse" />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        <span className="text-[6px] text-gray-500">
+          DISCARD {discardPile.length > 0 && `(${discardPile.length})`}
+        </span>
+      </div>
+    </div>
   );
 }
