@@ -17,8 +17,8 @@ export function PlayerHand() {
   const canSelect = isMyTurn && (phase === 'play' || phase === 'discard');
 
   const [orderedIds, setOrderedIds] = useState<string[]>(() => hand.map(c => c.id));
-  const dragSrcIdx = useRef<number | null>(null);
-  const dragOverIdx = useRef<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const dragState = useRef<{ srcIdx: number; startX: number; moved: boolean } | null>(null);
 
   useEffect(() => {
     setOrderedIds(prev => {
@@ -30,37 +30,40 @@ export function PlayerHand() {
   }, [hand]);
 
   const orderedHand = orderedIds.map(id => hand.find(c => c.id === id)).filter(Boolean) as CardType[];
-
   const isSelected = (id: string) => selectedCards.some(c => c.id === id);
 
-  function handleCardClick(card: CardType) {
-    if (!canSelect) return;
-    if (isSelected(card.id)) {
-      dispatch({ type: 'DESELECT_CARD', cardId: card.id });
-    } else {
-      dispatch({ type: 'SELECT_CARD', card });
+  function handlePointerDown(e: React.PointerEvent<HTMLDivElement>, i: number) {
+    dragState.current = { srcIdx: i, startX: e.clientX, moved: false };
+    containerRef.current?.setPointerCapture(e.pointerId);
+  }
+
+  function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!dragState.current || !containerRef.current) return;
+    if (Math.abs(e.clientX - dragState.current.startX) > 8) dragState.current.moved = true;
+    if (!dragState.current.moved) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const target = Math.max(0, Math.min(orderedHand.length - 1, Math.floor(x / OVERLAP)));
+    if (target !== dragState.current.srcIdx) {
+      const newOrder = [...orderedIds];
+      const [moved] = newOrder.splice(dragState.current.srcIdx, 1);
+      newOrder.splice(target, 0, moved);
+      dragState.current.srcIdx = target;
+      setOrderedIds(newOrder);
     }
   }
 
-  // Container-level drag handlers — calculate target from mouse X position
-  function handleContainerDragOver(e: React.DragEvent<HTMLDivElement>) {
-    e.preventDefault();
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    dragOverIdx.current = Math.max(0, Math.min(orderedHand.length - 1, Math.floor(x / OVERLAP)));
-  }
-
-  function handleContainerDrop(e: React.DragEvent<HTMLDivElement>) {
-    e.preventDefault();
-    const src = dragSrcIdx.current;
-    const target = dragOverIdx.current;
-    if (src === null || target === null || src === target) return;
-    const newOrder = [...orderedIds];
-    const [moved] = newOrder.splice(src, 1);
-    newOrder.splice(target, 0, moved);
-    setOrderedIds(newOrder);
-    dragSrcIdx.current = null;
-    dragOverIdx.current = null;
+  function handlePointerUp(e: React.PointerEvent<HTMLDivElement>, card: CardType) {
+    if (!dragState.current?.moved && canSelect) {
+      // Short tap = select/deselect
+      if (isSelected(card.id)) {
+        dispatch({ type: 'DESELECT_CARD', cardId: card.id });
+      } else {
+        dispatch({ type: 'SELECT_CARD', card });
+      }
+    }
+    dragState.current = null;
   }
 
   const totalWidth = orderedHand.length > 0 ? OVERLAP * (orderedHand.length - 1) + CARD_WIDTH : 0;
@@ -68,10 +71,10 @@ export function PlayerHand() {
   return (
     <div className="relative flex flex-col items-center" style={{ minHeight: CARD_HEIGHT + 34 }}>
       <div
+        ref={containerRef}
         className="relative"
-        style={{ width: totalWidth, height: CARD_HEIGHT }}
-        onDragOver={handleContainerDragOver}
-        onDrop={handleContainerDrop}
+        style={{ width: totalWidth, height: CARD_HEIGHT, touchAction: 'none' }}
+        onPointerMove={handlePointerMove}
       >
         {orderedHand.map((card, i) => {
           const selected = isSelected(card.id);
@@ -79,25 +82,23 @@ export function PlayerHand() {
           return (
             <div
               key={card.id}
-              draggable
-              onDragStart={() => { dragSrcIdx.current = i; }}
-              onDragEnd={() => { dragSrcIdx.current = null; dragOverIdx.current = null; }}
               style={{
                 position: 'absolute',
                 left: i * OVERLAP,
                 top: 0,
                 zIndex: selected ? 20 : i + 1,
-                transition: 'transform 0.2s ease',
+                transition: 'transform 0.15s ease',
                 transform: selected ? 'translateY(-14px)' : 'translateY(0)',
                 cursor: 'grab',
               }}
+              onPointerDown={e => handlePointerDown(e, i)}
+              onPointerUp={e => handlePointerUp(e, card)}
             >
               <Card
                 card={card}
                 selected={selected}
                 isDrawnCard={isDrawn}
                 size="lg"
-                onClick={() => handleCardClick(card)}
                 disabled={!canSelect}
               />
             </div>

@@ -45,7 +45,7 @@ export function MeldArea() {
               onClick={() => handleMeldClick(meld)}
             >
               {meld.cards.map(card => (
-                <Card key={card.id} card={card} size="sm" disabled />
+                <Card key={card.id} card={card} size="sm" disabled hologram={meld.cards.length >= 4} />
               ))}
               {isExtendable && (
                 <div className="flex items-center px-1">

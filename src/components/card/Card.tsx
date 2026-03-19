@@ -7,6 +7,7 @@ interface CardProps {
   card: CardType;
   selected?: boolean;
   isDrawnCard?: boolean;
+  hologram?: boolean;
   size?: 'sm' | 'md' | 'lg';
   onClick?: () => void;
   disabled?: boolean;
@@ -19,13 +20,13 @@ const SIZE_STYLES = {
   lg: { width: 78, height: 110, rankSize: 12, suitCenterSize: 32 },
 };
 
-export function Card({ card, selected, isDrawnCard, size = 'md', onClick, disabled, style }: CardProps) {
+export function Card({ card, selected, isDrawnCard, hologram, size = 'md', onClick, disabled, style }: CardProps) {
   const dim = SIZE_STYLES[size];
   const colorClass = suitColorClass(card.suit);
 
   return (
     <motion.div
-      className={`card ${selected ? 'selected' : ''} ${isDrawnCard ? 'drawn-card' : ''}`}
+      className={`card ${selected ? 'selected' : ''} ${isDrawnCard ? 'drawn-card' : ''} ${hologram ? 'hologram' : ''}`}
       style={{ width: dim.width, height: dim.height, ...style }}
       onClick={!disabled ? onClick : undefined}
       whileHover={!disabled ? { scale: 1.04 } : undefined}
