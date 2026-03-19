@@ -46,7 +46,7 @@ export function HomeScreen({ onSolo, onMultiplayer }: Props) {
           className="btn-neon btn-neon-green py-4 text-[10px] tracking-widest"
           onClick={onSolo}
         >
-          ▶ SOLO vs AI
+          ▶ SOLO vs CPU
         </button>
 
         <button
