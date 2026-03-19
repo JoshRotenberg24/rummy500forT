@@ -3,15 +3,25 @@ import { useGameStore } from '../../store/gameStore';
 import { Card as CardType } from '../../engine/types';
 import { Card } from '../card/Card';
 
-const OVERLAP = 34;
-const CARD_WIDTH = 78;
-const CARD_HEIGHT = 110;
+function useCardLayout() {
+  const isTablet = () => window.innerWidth >= 768;
+  const [tablet, setTablet] = useState(isTablet);
+  useEffect(() => {
+    const onResize = () => setTablet(isTablet());
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  return tablet
+    ? { cardSize: 'xl' as const, overlap: 52, cardWidth: 100, cardHeight: 140 }
+    : { cardSize: 'lg' as const, overlap: 34, cardWidth: 78, cardHeight: 110 };
+}
 
 export function PlayerHand() {
   const state = useGameStore(s => s.state);
   const dispatch = useGameStore(s => s.dispatch);
   const { hand } = state.players.player;
   const { phase, selectedCards, drawnCard, activePlayer } = state.turn;
+  const { cardSize, overlap, cardWidth, cardHeight } = useCardLayout();
 
   const isMyTurn = activePlayer === 'player';
   const canSelect = isMyTurn && (phase === 'play' || phase === 'discard');
@@ -44,7 +54,7 @@ export function PlayerHand() {
 
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    const target = Math.max(0, Math.min(orderedHand.length - 1, Math.floor(x / OVERLAP)));
+    const target = Math.max(0, Math.min(orderedHand.length - 1, Math.floor(x / overlap)));
     if (target !== dragState.current.srcIdx) {
       const newOrder = [...orderedIds];
       const [moved] = newOrder.splice(dragState.current.srcIdx, 1);
@@ -66,14 +76,14 @@ export function PlayerHand() {
     dragState.current = null;
   }
 
-  const totalWidth = orderedHand.length > 0 ? OVERLAP * (orderedHand.length - 1) + CARD_WIDTH : 0;
+  const totalWidth = orderedHand.length > 0 ? overlap * (orderedHand.length - 1) + cardWidth : 0;
 
   return (
-    <div className="relative flex flex-col items-center" style={{ minHeight: CARD_HEIGHT + 34 }}>
+    <div className="relative flex flex-col items-center" style={{ minHeight: cardHeight + 34 }}>
       <div
         ref={containerRef}
         className="relative"
-        style={{ width: totalWidth, height: CARD_HEIGHT, touchAction: 'none' }}
+        style={{ width: totalWidth, height: cardHeight, touchAction: 'none' }}
         onPointerMove={handlePointerMove}
       >
         {orderedHand.map((card, i) => {
@@ -84,7 +94,7 @@ export function PlayerHand() {
               key={card.id}
               style={{
                 position: 'absolute',
-                left: i * OVERLAP,
+                left: i * overlap,
                 top: 0,
                 zIndex: selected ? 20 : i + 1,
                 transition: 'transform 0.15s ease',
@@ -98,7 +108,7 @@ export function PlayerHand() {
                 card={card}
                 selected={selected}
                 isDrawnCard={isDrawn}
-                size="lg"
+                size={cardSize}
                 disabled={!canSelect}
               />
             </div>

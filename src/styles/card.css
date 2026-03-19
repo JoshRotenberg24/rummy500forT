@@ -3,7 +3,10 @@
 .card {
   position: relative;
   border-radius: 8px;
-  background: linear-gradient(145deg, #1e1b4b 0%, #13103a 100%);
+  /* Lighter ellipse in center makes suit/rank pop against the dark corners */
+  background:
+    radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.09) 0%, transparent 68%),
+    linear-gradient(145deg, #1e1b4b 0%, #13103a 100%);
   border: 1.5px solid rgba(168, 85, 247, 0.35);
   box-shadow: 0 0 10px rgba(168,85,247,0.3), 0 4px 12px rgba(0,0,0,0.5);
   overflow: hidden;
@@ -101,7 +104,7 @@
   left: 50%;
   transform: translate(-50%, -50%);
   line-height: 1;
-  opacity: 0.25;
+  opacity: 0.65;
 }
 
 .card-suit-small {
@@ -110,13 +113,21 @@
 
 /* Suit colors */
 .suit-red {
-  color: #f87171;
-  text-shadow: 0 0 6px rgba(248,113,113,0.8), 0 0 14px rgba(248,113,113,0.4);
+  color: #ff6b6b;
+  text-shadow:
+    0 0 3px #fff,
+    0 0 8px rgba(255,80,80,1),
+    0 0 18px rgba(255,80,80,0.7),
+    0 0 32px rgba(255,80,80,0.3);
 }
 
 .suit-black {
-  color: #34d399;
-  text-shadow: 0 0 6px rgba(52,211,153,0.8), 0 0 14px rgba(52,211,153,0.4);
+  color: #4fffb0;
+  text-shadow:
+    0 0 3px #fff,
+    0 0 8px rgba(52,255,160,1),
+    0 0 18px rgba(52,255,160,0.7),
+    0 0 32px rgba(52,255,160,0.3);
 }
 
 /* ── Card back ───────────────────────────────────────────── */

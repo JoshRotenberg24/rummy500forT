@@ -1,20 +1,20 @@
+import { useEffect, useState } from 'react';
 import { useMultiplayerStore } from '../../store/multiplayerStore';
-import { findValidMelds, canExtendMeld } from '../../engine/meld';
-import { Card as CardType, Meld, PlayerId, GamePhase } from '../../engine/types';
+import { Card as CardType, PlayerId, GamePhase } from '../../engine/types';
 import { Card } from '../card/Card';
 import { CardBack } from '../card/CardBack';
 
-const DISCARD_OVERLAP = 18;
-const DISCARD_CARD_W = 48;
-const DISCARD_CARD_H = 68;
-
-function canMeld(hand: CardType[], discardPile: CardType[], targetIdx: number, melds: Meld[]): boolean {
-  const takenCards = discardPile.slice(targetIdx);
-  const targetCard = takenCards[0];
-  const combined = [...hand, ...takenCards];
-  const newMelds = findValidMelds(combined);
-  if (newMelds.some(m => m.some(c => c.id === targetCard.id))) return true;
-  return melds.some(m => canExtendMeld(m, [targetCard]));
+function useDiscardLayout() {
+  const isTablet = () => window.innerWidth >= 768;
+  const [tablet, setTablet] = useState(isTablet);
+  useEffect(() => {
+    const onResize = () => setTablet(isTablet());
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  return tablet
+    ? { overlap: 26, cardW: 62, cardH: 88, size: 'md' as const }
+    : { overlap: 18, cardW: 48, cardH: 68, size: 'sm' as const };
 }
 
 interface Props {
@@ -23,18 +23,17 @@ interface Props {
   isMyTurn: boolean;
   myPlayerId: PlayerId;
   phase: GamePhase;
-  melds: Meld[];
-  hand: CardType[];
 }
 
-export function MultiplayerDrawArea({ deck, discardPile, isMyTurn, phase, melds, hand }: Props) {
+export function MultiplayerDrawArea({ deck, discardPile, isMyTurn, phase }: Props) {
   const dispatch = useMultiplayerStore(s => s.dispatch);
+  const { overlap, cardW, cardH, size } = useDiscardLayout();
 
   const canDraw = isMyTurn && phase === 'draw';
 
   const fanWidth = discardPile.length > 0
-    ? DISCARD_OVERLAP * (discardPile.length - 1) + DISCARD_CARD_W
-    : DISCARD_CARD_W;
+    ? overlap * (discardPile.length - 1) + cardW
+    : cardW;
 
   return (
     <div className="flex items-center gap-4 px-3 py-2">
@@ -60,33 +59,27 @@ export function MultiplayerDrawArea({ deck, discardPile, isMyTurn, phase, melds,
 
       {/* Discard pile — fanned inline */}
       <div className="flex flex-col gap-1">
-        <div className="overflow-x-auto" style={{ maxWidth: 'min(50vw, 260px)' }}>
+        <div className="overflow-x-auto" style={{ maxWidth: 'min(55vw, 320px)' }}>
           {discardPile.length === 0 ? (
             <div
               className="rounded-lg border-2 border-dashed border-gray-700 flex items-center justify-center flex-shrink-0"
-              style={{ width: DISCARD_CARD_W, height: DISCARD_CARD_H }}
+              style={{ width: cardW, height: cardH }}
             >
               <span className="text-gray-600">∅</span>
             </div>
           ) : (
-            <div className="relative flex-shrink-0" style={{ width: fanWidth, height: DISCARD_CARD_H }}>
+            <div className="relative flex-shrink-0" style={{ width: fanWidth, height: cardH }}>
               {discardPile.map((card, i) => {
                 const isTop = i === discardPile.length - 1;
-                const meldable = isTop || canMeld(hand, discardPile, i, melds);
-                const clickable = canDraw && meldable;
+                const clickable = canDraw;
                 return (
                   <div
                     key={card.id}
-                    style={{ position: 'absolute', left: i * DISCARD_OVERLAP, top: 0, zIndex: i + 1 }}
+                    style={{ position: 'absolute', left: i * overlap, top: 0, zIndex: i + 1 }}
                     className={clickable ? 'cursor-pointer' : 'cursor-default'}
                     onClick={() => clickable && dispatch({ type: 'DRAW_FROM_DISCARD', cardId: card.id })}
                   >
-                    <Card
-                      card={card}
-                      size="sm"
-                      disabled={!clickable}
-                      style={canDraw && !meldable ? { opacity: 0.4 } : undefined}
-                    />
+                    <Card card={card} size={size} disabled={!clickable} />
                     {clickable && isTop && (
                       <div className="absolute inset-0 rounded-lg ring-2 ring-blue-400 ring-opacity-60 animate-pulse" />
                     )}

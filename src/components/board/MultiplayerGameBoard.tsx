@@ -72,7 +72,7 @@ export function MultiplayerGameBoard({ onBack }: Props) {
       {/* Draw + Meld area */}
       <div className="border-b border-purple-950 flex">
         <div className="border-r border-purple-950 flex-shrink-0">
-          <MultiplayerDrawArea deck={deck} discardPile={discardPile} isMyTurn={isMyTurn} myPlayerId={myPlayerId} phase={turn.phase} melds={melds} hand={myHand} />
+          <MultiplayerDrawArea deck={deck} discardPile={discardPile} isMyTurn={isMyTurn} myPlayerId={myPlayerId} phase={turn.phase} />
         </div>
         <div className="flex-1 overflow-hidden">
           <MultiplayerMeldArea melds={melds} myPlayerId={myPlayerId} selectedCards={turn.selectedCards} isMyTurn={isMyTurn} phase={turn.phase} />

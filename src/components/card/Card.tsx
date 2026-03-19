@@ -8,16 +8,17 @@ interface CardProps {
   selected?: boolean;
   isDrawnCard?: boolean;
   hologram?: boolean;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   onClick?: () => void;
   disabled?: boolean;
   style?: React.CSSProperties;
 }
 
 const SIZE_STYLES = {
-  sm: { width: 48, height: 68, rankSize: 8, suitCenterSize: 20 },
-  md: { width: 62, height: 88, rankSize: 10, suitCenterSize: 26 },
-  lg: { width: 78, height: 110, rankSize: 12, suitCenterSize: 32 },
+  sm: { width: 48, height: 68, rankSize: 10, suitCenterSize: 26 },
+  md: { width: 62, height: 88, rankSize: 13, suitCenterSize: 34 },
+  lg: { width: 78, height: 110, rankSize: 16, suitCenterSize: 44 },
+  xl: { width: 100, height: 140, rankSize: 21, suitCenterSize: 58 },
 };
 
 export function Card({ card, selected, isDrawnCard, hologram, size = 'md', onClick, disabled, style }: CardProps) {
