@@ -1,24 +1,34 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useGameStore } from '../../store/gameStore';
-import { Card } from '../card/Card';
-import { Card as CardType } from '../../engine/types';
 import { useState } from 'react';
+import { useGameStore } from '../../store/gameStore';
+import { Card as CardType } from '../../engine/types';
+import { findValidMelds, canExtendMeld } from '../../engine/meld';
+import { Card } from '../card/Card';
 
 interface Props {
   onClose: () => void;
 }
 
+function canMeldPickedCard(hand: CardType[], discardPile: CardType[], targetIdx: number, existingMelds: import('../../engine/types').Meld[]): boolean {
+  const takenCards = discardPile.slice(targetIdx);
+  const targetCard = takenCards[0];
+  const combined = [...hand, ...takenCards];
+  const newMelds = findValidMelds(combined);
+  if (newMelds.some(meld => meld.some(c => c.id === targetCard.id))) return true;
+  return existingMelds.some(meld => canExtendMeld(meld, [targetCard]));
+}
+
 export function DiscardPickerOverlay({ onClose }: Props) {
   const state = useGameStore(s => s.state);
   const dispatch = useGameStore(s => s.dispatch);
-  const { discardPile } = state;
+  const { discardPile, melds } = state;
+  const hand = state.players.player.hand;
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
-  // discardPile[last] = top. Show top-to-bottom for user (reversed visually).
-  const reversed = [...discardPile].reverse(); // reversed[0] = top of pile
+  const reversed = [...discardPile].reverse();
 
-  function handleSelect(card: CardType, originalIdx: number) {
-    // originalIdx is index in discardPile (0=bottom)
+  function handleSelect(card: CardType, originalIdx: number, canMeld: boolean) {
+    if (!canMeld) return;
     dispatch({ type: 'DRAW_FROM_DISCARD', cardId: card.id });
     onClose();
   }
@@ -32,7 +42,6 @@ export function DiscardPickerOverlay({ onClose }: Props) {
         exit={{ opacity: 0 }}
         onClick={onClose}
       >
-        {/* Backdrop */}
         <div className="absolute inset-0 bg-black bg-opacity-75" />
 
         <motion.div
@@ -45,31 +54,34 @@ export function DiscardPickerOverlay({ onClose }: Props) {
         >
           <div className="text-center">
             <p className="text-[9px] neon-purple mb-1">PICK FROM DISCARD PILE</p>
-            <p className="text-[7px] text-gray-400">You get selected card + all above it. Selected card must be melded immediately.</p>
+            <p className="text-[7px] text-gray-400">Selected card must be melded immediately. Greyed out = can't meld.</p>
           </div>
 
-          {/* Cards displayed top-to-bottom */}
           <div className="flex flex-col gap-1 max-h-[60vh] overflow-y-auto">
             {reversed.map((card, revIdx) => {
               const originalIdx = discardPile.length - 1 - revIdx;
               const isTop = revIdx === 0;
-              const isHighlighted = hoveredIdx !== null && originalIdx >= hoveredIdx;
+              const canMeld = canMeldPickedCard(hand, discardPile, originalIdx, melds);
+              const isHighlighted = hoveredIdx !== null && originalIdx >= hoveredIdx && canMeld;
               return (
                 <motion.div
                   key={card.id}
-                  className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer border transition-all
-                    ${isHighlighted
-                      ? 'border-teal-400 bg-teal-900 bg-opacity-20'
-                      : 'border-transparent hover:border-purple-600'
+                  className={`flex items-center gap-3 p-2 rounded-lg border transition-all
+                    ${!canMeld
+                      ? 'border-transparent opacity-40 cursor-not-allowed'
+                      : isHighlighted
+                      ? 'border-teal-400 bg-teal-900 bg-opacity-20 cursor-pointer'
+                      : 'border-transparent hover:border-purple-600 cursor-pointer'
                     }`}
-                  onMouseEnter={() => setHoveredIdx(originalIdx)}
+                  onMouseEnter={() => canMeld && setHoveredIdx(originalIdx)}
                   onMouseLeave={() => setHoveredIdx(null)}
-                  onClick={() => handleSelect(card, originalIdx)}
-                  whileHover={{ x: 4 }}
+                  onClick={() => handleSelect(card, originalIdx, canMeld)}
+                  whileHover={canMeld ? { x: 4 } : {}}
                 >
                   <Card card={card} size="sm" disabled />
                   <div className="flex flex-col gap-0.5">
                     {isTop && <span className="text-[7px] neon-blue">TOP</span>}
+                    {!canMeld && <span className="text-[7px] text-gray-600">CAN'T MELD</span>}
                     {isHighlighted && (
                       <span className="text-[7px] neon-teal">← takes {discardPile.length - originalIdx} card{discardPile.length - originalIdx !== 1 ? 's' : ''}</span>
                     )}

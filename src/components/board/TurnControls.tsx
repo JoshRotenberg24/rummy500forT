@@ -14,7 +14,7 @@ export function TurnControls() {
   }
 
   const canPlayMeld = phase === 'play' && selectedCards.length >= 3 && isValidMeld(selectedCards);
-  const canDiscard = (phase === 'play' || phase === 'discard') && selectedCards.length === 1 && !drawnFromDiscard;
+  const canDiscard = (phase === 'play' || phase === 'discard') && selectedCards.length === 1 && !(drawnFromDiscard && !!drawnCard);
   const canEndTurn = phase === 'play' && selectedCards.length === 1 && !drawnFromDiscard;
 
   function handlePlayMeld() {
@@ -69,7 +69,7 @@ export function TurnControls() {
           <button
             className="btn-neon btn-neon-blue"
             onClick={handleDiscard}
-            disabled={selectedCards.length !== 1 || (drawnFromDiscard && !!drawnCard)}
+            disabled={!canDiscard}
           >
             DISCARD
           </button>

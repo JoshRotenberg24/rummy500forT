@@ -1,7 +1,9 @@
+import { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../../store/gameStore';
+import { Card as CardType } from '../../engine/types';
 import { Card } from '../card/Card';
 
-const OVERLAP = 34; // px exposed per card (rest overlaps)
+const OVERLAP = 34;
 const CARD_WIDTH = 78;
 const CARD_HEIGHT = 110;
 
@@ -14,11 +16,25 @@ export function PlayerHand() {
   const isMyTurn = activePlayer === 'player';
   const canSelect = isMyTurn && (phase === 'play' || phase === 'discard');
 
+  // Local display order for drag-to-reorder
+  const [orderedIds, setOrderedIds] = useState<string[]>(() => hand.map(c => c.id));
+  const dragSrcIdx = useRef<number | null>(null);
+
+  useEffect(() => {
+    setOrderedIds(prev => {
+      const currentIds = new Set(hand.map(c => c.id));
+      const kept = prev.filter(id => currentIds.has(id));
+      const added = hand.filter(c => !kept.includes(c.id)).map(c => c.id);
+      return [...kept, ...added];
+    });
+  }, [hand]);
+
+  const orderedHand = orderedIds.map(id => hand.find(c => c.id === id)).filter(Boolean) as CardType[];
+
   const isSelected = (id: string) => selectedCards.some(c => c.id === id);
 
-  function handleCardClick(cardIdx: number) {
+  function handleCardClick(card: CardType) {
     if (!canSelect) return;
-    const card = hand[cardIdx];
     if (isSelected(card.id)) {
       dispatch({ type: 'DESELECT_CARD', cardId: card.id });
     } else {
@@ -26,18 +42,40 @@ export function PlayerHand() {
     }
   }
 
-  // Fan layout: total width = overlap * (n-1) + CARD_WIDTH
-  const totalWidth = hand.length > 0 ? OVERLAP * (hand.length - 1) + CARD_WIDTH : 0;
+  function handleDragStart(i: number) {
+    dragSrcIdx.current = i;
+  }
+
+  function handleDragOver(e: React.DragEvent, i: number) {
+    e.preventDefault();
+    const src = dragSrcIdx.current;
+    if (src === null || src === i) return;
+    const newOrder = [...orderedIds];
+    const [moved] = newOrder.splice(src, 1);
+    newOrder.splice(i, 0, moved);
+    dragSrcIdx.current = i;
+    setOrderedIds(newOrder);
+  }
+
+  function handleDragEnd() {
+    dragSrcIdx.current = null;
+  }
+
+  const totalWidth = orderedHand.length > 0 ? OVERLAP * (orderedHand.length - 1) + CARD_WIDTH : 0;
 
   return (
-    <div className="relative flex flex-col items-center" style={{ minHeight: CARD_HEIGHT + 20 }}>
+    <div className="relative flex flex-col items-center" style={{ minHeight: CARD_HEIGHT + 34 }}>
       <div className="relative" style={{ width: totalWidth, height: CARD_HEIGHT }}>
-        {hand.map((card, i) => {
+        {orderedHand.map((card, i) => {
           const selected = isSelected(card.id);
           const isDrawn = drawnCard?.id === card.id;
           return (
             <div
               key={card.id}
+              draggable
+              onDragStart={() => handleDragStart(i)}
+              onDragOver={e => handleDragOver(e, i)}
+              onDragEnd={handleDragEnd}
               style={{
                 position: 'absolute',
                 left: i * OVERLAP,
@@ -45,6 +83,7 @@ export function PlayerHand() {
                 zIndex: selected ? 20 : i + 1,
                 transition: 'transform 0.2s ease',
                 transform: selected ? 'translateY(-14px)' : 'translateY(0)',
+                cursor: 'grab',
               }}
             >
               <Card
@@ -52,7 +91,7 @@ export function PlayerHand() {
                 selected={selected}
                 isDrawnCard={isDrawn}
                 size="lg"
-                onClick={() => handleCardClick(i)}
+                onClick={() => handleCardClick(card)}
                 disabled={!canSelect}
               />
             </div>

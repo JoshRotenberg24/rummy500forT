@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useGameStore } from '../../store/gameStore';
+import { findValidMelds, canExtendMeld } from '../../engine/meld';
 import { Card } from '../card/Card';
 import { CardBack } from '../card/CardBack';
 import { DiscardPickerOverlay } from '../overlays/DiscardPickerOverlay';
@@ -9,9 +10,28 @@ export function DrawArea() {
   const dispatch = useGameStore(s => s.dispatch);
   const [showPicker, setShowPicker] = useState(false);
 
-  const { deck, discardPile, turn } = state;
+  const { deck, discardPile, turn, melds } = state;
+  const hand = state.players.player.hand;
   const canDraw = turn.phase === 'draw' && turn.activePlayer === 'player';
   const topDiscard = discardPile[discardPile.length - 1];
+
+  // Only allow discard pickup if the top card can be melded
+  const canPickTopDiscard = canDraw && !!topDiscard && (() => {
+    const combined = [...hand, topDiscard];
+    const newMelds = findValidMelds(combined);
+    if (newMelds.some(m => m.some(c => c.id === topDiscard.id))) return true;
+    return melds.some(m => canExtendMeld(m, [topDiscard]));
+  })();
+
+  // For multi-card pile: at least one card in pile is meldable
+  const anyDiscardMeldable = canDraw && discardPile.length > 0 && discardPile.some((_, i) => {
+    const takenCards = discardPile.slice(i);
+    const targetCard = takenCards[0];
+    const combined = [...hand, ...takenCards];
+    const newMelds = findValidMelds(combined);
+    if (newMelds.some(m => m.some(c => c.id === targetCard.id))) return true;
+    return melds.some(m => canExtendMeld(m, [targetCard]));
+  });
 
   function handleDrawDeck() {
     if (!canDraw) return;
@@ -21,8 +41,10 @@ export function DrawArea() {
   function handleDiscardClick() {
     if (!canDraw || discardPile.length === 0) return;
     if (discardPile.length === 1) {
+      if (!canPickTopDiscard) return;
       dispatch({ type: 'DRAW_FROM_DISCARD', cardId: topDiscard.id });
     } else {
+      if (!anyDiscardMeldable) return;
       setShowPicker(true);
     }
   }
@@ -54,13 +76,14 @@ export function DrawArea() {
         {/* Discard pile */}
         <div className="flex flex-col items-center gap-1">
           <div
-            className={`relative ${canDraw && discardPile.length > 0 ? 'cursor-pointer' : 'cursor-default'}`}
+            className={`relative ${anyDiscardMeldable ? 'cursor-pointer' : 'cursor-default'} ${canDraw && !anyDiscardMeldable && discardPile.length > 0 ? 'opacity-50' : ''}`}
             onClick={handleDiscardClick}
+            title={canDraw && !anyDiscardMeldable && discardPile.length > 0 ? "Can't meld any discard card" : undefined}
           >
             {topDiscard ? (
               <>
-                <Card card={topDiscard} size="md" disabled={!canDraw} />
-                {canDraw && (
+                <Card card={topDiscard} size="md" disabled={!anyDiscardMeldable} />
+                {anyDiscardMeldable && (
                   <div className="absolute inset-0 rounded-lg ring-2 ring-blue-400 ring-opacity-60 animate-pulse" />
                 )}
               </>

@@ -85,7 +85,7 @@ export function MultiplayerGameBoard({ onBack }: Props) {
       </div>
 
       {/* My hand */}
-      <div className="flex-1 flex items-center justify-center overflow-hidden pb-2 pt-3">
+      <div className="flex-1 flex items-end justify-center pb-2 pt-6">
         <MultiplayerHand hand={myHand} isMyTurn={isMyTurn} phase={turn.phase} selectedCards={turn.selectedCards} drawnCard={turn.drawnCard} myPlayerId={myPlayerId} />
       </div>
 

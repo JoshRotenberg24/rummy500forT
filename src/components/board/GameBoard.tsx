@@ -38,7 +38,7 @@ export function GameBoard() {
       </div>
 
       {/* Player hand — flex-1 so it takes remaining space */}
-      <div className="flex-1 flex items-center justify-center overflow-hidden pb-2 pt-3">
+      <div className="flex-1 flex items-end justify-center pb-2 pt-6">
         <PlayerHand />
       </div>
 
