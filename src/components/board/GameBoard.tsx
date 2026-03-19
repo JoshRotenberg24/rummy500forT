@@ -8,14 +8,14 @@ import { OpponentArea } from './OpponentArea';
 import { PlayerHand } from './PlayerHand';
 import { TurnControls } from './TurnControls';
 
-export function GameBoard() {
+export function GameBoard({ onHome }: { onHome?: () => void }) {
   const phase = useGameStore(s => s.state.turn.phase);
   const reset = useGameStore(s => s.reset);
 
   return (
     <div className="app-root select-none">
       {/* Scoreboard */}
-      <ScoreBoard reset={reset} />
+      <ScoreBoard reset={reset} onHome={onHome} />
 
       {/* Opponent area */}
       <div className="border-b border-purple-950">

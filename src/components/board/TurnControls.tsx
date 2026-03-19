@@ -50,6 +50,9 @@ export function TurnControls() {
               {isValidMeld(selectedCards) ? '✓ VALID MELD' : '✗ INVALID'}
             </span>
           )}
+          {selectedCards.length > 1 && phase === 'play' && (
+            <span className="ml-2 text-gray-600">· select 1 to discard</span>
+          )}
         </div>
       )}
 

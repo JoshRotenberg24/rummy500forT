@@ -9,9 +9,9 @@ import { useMultiplayerStore } from './store/multiplayerStore';
 
 type Screen = 'home' | 'solo' | 'multiplayer';
 
-function GameWrapper() {
+function GameWrapper({ onHome }: { onHome: () => void }) {
   useAI();
-  return <GameBoard />;
+  return <GameBoard onHome={onHome} />;
 }
 
 function MultiplayerWrapper({ onBack }: { onBack: () => void }) {
@@ -41,7 +41,7 @@ function App() {
           onMultiplayer={() => setScreen('multiplayer')}
         />
       )}
-      {screen === 'solo' && <GameWrapper />}
+      {screen === 'solo' && <GameWrapper onHome={() => setScreen('home')} />}
       {screen === 'multiplayer' && (
         <MultiplayerWrapper onBack={() => setScreen('home')} />
       )}

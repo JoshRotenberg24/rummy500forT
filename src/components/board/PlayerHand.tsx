@@ -4,16 +4,20 @@ import { Card as CardType } from '../../engine/types';
 import { Card } from '../card/Card';
 
 function useCardLayout() {
-  const isTablet = () => window.innerWidth >= 768;
-  const [tablet, setTablet] = useState(isTablet);
+  const getLayout = () => {
+    const wide = window.innerWidth >= 768;
+    const tall = window.innerHeight >= 650;
+    return wide && tall
+      ? { cardSize: 'xl' as const, overlap: 52, cardWidth: 100, cardHeight: 140 }
+      : { cardSize: 'lg' as const, overlap: 34, cardWidth: 78, cardHeight: 110 };
+  };
+  const [layout, setLayout] = useState(getLayout);
   useEffect(() => {
-    const onResize = () => setTablet(isTablet());
+    const onResize = () => setLayout(getLayout());
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
-  return tablet
-    ? { cardSize: 'xl' as const, overlap: 52, cardWidth: 100, cardHeight: 140 }
-    : { cardSize: 'lg' as const, overlap: 34, cardWidth: 78, cardHeight: 110 };
+  return layout;
 }
 
 export function PlayerHand() {

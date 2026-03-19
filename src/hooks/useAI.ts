@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react';
 import { computeAITurn } from '../ai/medium';
 import { useGameStore } from '../store/gameStore';
 
-const ACTION_DELAY_MS = 400;
+const INITIAL_DELAY_MS = 800;  // long enough to read "THINKING..."
+const ACTION_DELAY_MS = 500;
 
 // Module-level flag so cleanup from phase transitions doesn't cancel mid-turn actions.
 // Reset whenever a new AI turn starts.
@@ -34,7 +35,7 @@ export function useAI() {
       }
     }
 
-    const timer = setTimeout(executeNext, ACTION_DELAY_MS);
+    const timer = setTimeout(executeNext, INITIAL_DELAY_MS);
     // Only cancel on unmount, NOT on every re-render from state changes
     return () => clearTimeout(timer);
   // Only re-run when a new ai_turn begins (identified by round + gameId)
