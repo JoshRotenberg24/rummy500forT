@@ -44,7 +44,10 @@ export function DrawArea() {
             {deck.length}
           </div>
           {canDraw && (
-            <div className="absolute inset-0 rounded-lg ring-2 ring-purple-500 ring-opacity-60 animate-pulse" />
+            <div className="absolute inset-0 rounded-lg ring-4 ring-purple-400 ring-opacity-80 animate-pulse" />
+          )}
+          {canDraw && (
+            <div className="absolute -bottom-5 left-0 right-0 text-center text-[6px] neon-purple animate-pulse">TAP</div>
           )}
         </div>
         <span className="text-[6px] text-gray-500">DECK</span>
@@ -87,9 +90,7 @@ export function DrawArea() {
             </div>
           )}
         </div>
-        <span className="text-[6px] text-gray-500">
-          DISCARD {discardPile.length > 0 && `(${discardPile.length})`}
-        </span>
+        <span className="text-[6px] text-gray-500">DISCARD</span>
       </div>
     </div>
   );

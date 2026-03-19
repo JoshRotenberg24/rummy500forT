@@ -33,10 +33,15 @@ export function TurnControls() {
       {/* Phase indicator */}
       <div className="text-center">
         {phase === 'draw' && <span className="text-[8px] neon-blue animate-pulse">DRAW A CARD</span>}
-        {phase === 'play' && !drawnFromDiscard && <span className="text-[8px] neon-purple">SELECT CARDS TO MELD OR DISCARD</span>}
+        {phase === 'play' && !drawnFromDiscard && selectedCards.length === 0 && (
+          <span className="text-[8px] neon-purple">TAP A CARD TO SELECT</span>
+        )}
+        {phase === 'play' && !drawnFromDiscard && selectedCards.length > 0 && (
+          <span className="text-[8px] neon-purple">MELD, DISCARD, OR SELECT MORE</span>
+        )}
         {phase === 'play' && drawnFromDiscard && (
           <span className="text-[8px] neon-pink animate-pulse">
-            MUST MELD {drawnCard?.rank}{drawnCard ? '♦' : ''} FIRST!
+            MUST MELD {drawnCard?.rank}{drawnCard?.suit === 'hearts' ? '♥' : drawnCard?.suit === 'diamonds' ? '♦' : drawnCard?.suit === 'clubs' ? '♣' : '♠'} FIRST!
           </span>
         )}
       </div>
@@ -51,7 +56,7 @@ export function TurnControls() {
             </span>
           )}
           {selectedCards.length > 1 && phase === 'play' && (
-            <span className="ml-2 text-gray-600">· select 1 to discard</span>
+            <span className="ml-2 text-gray-600">· tap 1 card only to discard</span>
           )}
         </div>
       )}
