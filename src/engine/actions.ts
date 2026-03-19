@@ -24,6 +24,35 @@ function removeCards(hand: Card[], cardIds: Set<string>): [Card[], Card[]] {
   return [remaining, removed];
 }
 
+/** Finalise the round when a player empties their hand (by melding or discarding). */
+function endRound(state: GameState): GameState {
+  const { turn, players } = state;
+  const active = turn.activePlayer;
+  const roundScores = calculateRoundScores(state);
+  const newPlayerScore = players.player.score + roundScores.player;
+  const newOpponentScore = players.opponent.score + roundScores.opponent;
+  const hasWinner = newPlayerScore >= WINNING_SCORE || newOpponentScore >= WINNING_SCORE;
+  const winnerCandidate: PlayerId | null = hasWinner
+    ? newPlayerScore > newOpponentScore ? 'player' : 'opponent'
+    : null;
+  return {
+    ...state,
+    players: {
+      player: { ...players.player, score: newPlayerScore },
+      opponent: { ...players.opponent, score: newOpponentScore },
+    },
+    turn: {
+      ...turn,
+      activePlayer: active,
+      phase: hasWinner ? 'game_over' : 'round_over',
+      drawnFromDiscard: false,
+      drawnCard: null,
+      selectedCards: [],
+    },
+    winner: winnerCandidate,
+  };
+}
+
 export function applyAction(state: GameState, action: GameAction): GameState {
   const { turn, players, discardPile, deck, melds } = state;
   const active = turn.activePlayer;
@@ -111,12 +140,13 @@ export function applyAction(state: GameState, action: GameAction): GameState {
         ownerId: active,
       };
 
+      const meldPoints = newMeld.cards.reduce((s, c) => s + (c.rank === 'A' ? 15 : ['J','Q','K'].includes(c.rank) ? 10 : 5), 0);
       const drawnCardMelded =
         turn.drawnFromDiscard &&
         turn.drawnCard &&
         cardIds.has(turn.drawnCard.id);
 
-      return {
+      const nextState = {
         ...state,
         melds: [...melds, newMeld],
         players: {
@@ -124,7 +154,7 @@ export function applyAction(state: GameState, action: GameAction): GameState {
           [active]: {
             ...players[active],
             hand: newHand,
-            roundScore: players[active].roundScore + newMeld.cards.reduce((s, c) => s + (c.rank === 'A' ? 15 : ['J','Q','K'].includes(c.rank) ? 10 : 5), 0),
+            roundScore: players[active].roundScore + meldPoints,
           },
         },
         turn: {
@@ -134,6 +164,10 @@ export function applyAction(state: GameState, action: GameAction): GameState {
           selectedCards: [],
         },
       };
+
+      // Player melded their last card — end the round immediately (no discard needed)
+      if (newHand.length === 0) return endRound(nextState);
+      return nextState;
     }
 
     case 'EXTEND_MELD': {
@@ -158,7 +192,7 @@ export function applyAction(state: GameState, action: GameAction): GameState {
         turn.drawnCard &&
         cardIds.has(turn.drawnCard.id);
 
-      return {
+      const nextState = {
         ...state,
         melds: melds.map(m => m.id === action.meldId ? updatedMeld : m),
         players: {
@@ -175,6 +209,10 @@ export function applyAction(state: GameState, action: GameAction): GameState {
           selectedCards: [],
         },
       };
+
+      // Player extended a meld with their last card — end the round immediately
+      if (newHand.length === 0) return endRound(nextState);
+      return nextState;
     }
 
     case 'DISCARD': {
@@ -199,7 +237,7 @@ export function applyAction(state: GameState, action: GameAction): GameState {
 
       // Check round over: active player emptied hand
       if (newHand.length === 0) {
-        const roundScores = calculateRoundScores({
+        return endRound({
           ...state,
           discardPile: newDiscardPile,
           players: {
@@ -207,39 +245,6 @@ export function applyAction(state: GameState, action: GameAction): GameState {
             [active]: { ...players[active], hand: newHand },
           },
         });
-
-        const newPlayerScore = players.player.score + roundScores.player;
-        const newOpponentScore = players.opponent.score + roundScores.opponent;
-        const hasWinner = newPlayerScore >= WINNING_SCORE || newOpponentScore >= WINNING_SCORE;
-        const winnerCandidate: PlayerId | null = hasWinner
-          ? newPlayerScore > newOpponentScore ? 'player' : 'opponent'
-          : null;
-
-        return {
-          ...state,
-          discardPile: newDiscardPile,
-          players: {
-            player: {
-              ...players.player,
-              hand: active === 'player' ? newHand : players.player.hand,
-              score: newPlayerScore,
-            },
-            opponent: {
-              ...players.opponent,
-              hand: active === 'opponent' ? newHand : players.opponent.hand,
-              score: newOpponentScore,
-            },
-          },
-          turn: {
-            ...turn,
-            activePlayer: active,
-            phase: hasWinner ? 'game_over' : 'round_over',
-            drawnFromDiscard: false,
-            drawnCard: null,
-            selectedCards: [],
-          },
-          winner: winnerCandidate,
-        };
       }
 
       // Switch to next player
