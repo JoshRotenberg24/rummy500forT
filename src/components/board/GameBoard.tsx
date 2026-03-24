@@ -27,7 +27,7 @@ export function GameBoard({ onHome }: { onHome?: () => void }) {
         <div className="border-r border-purple-950 flex-shrink-0">
           <DrawArea />
         </div>
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-y-auto max-h-52">
           <MeldArea />
         </div>
       </div>

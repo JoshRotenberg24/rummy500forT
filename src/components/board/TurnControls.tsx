@@ -1,5 +1,5 @@
 import { useGameStore } from '../../store/gameStore';
-import { isValidMeld } from '../../engine/meld';
+import { isValidMeld, canExtendMeld } from '../../engine/meld';
 
 export function TurnControls() {
   const state = useGameStore(s => s.state);
@@ -16,6 +16,10 @@ export function TurnControls() {
   const canPlayMeld = phase === 'play' && selectedCards.length >= 3 && isValidMeld(selectedCards);
   const canDiscard = (phase === 'play' || phase === 'discard') && selectedCards.length === 1 && !(drawnFromDiscard && !!drawnCard);
   const canEndTurn = phase === 'play' && selectedCards.length === 1 && !drawnFromDiscard;
+
+  // Check if any meld on the table can be extended with selected cards
+  const hasExtendableMeld = phase === 'play' && selectedCards.length > 0 &&
+    state.melds.some(meld => canExtendMeld(meld, selectedCards));
 
   function handlePlayMeld() {
     if (!canPlayMeld) return;
@@ -34,9 +38,12 @@ export function TurnControls() {
       <div className="text-center">
         {phase === 'draw' && <span className="text-[8px] neon-blue animate-pulse">DRAW A CARD</span>}
         {phase === 'play' && !drawnFromDiscard && selectedCards.length === 0 && (
-          <span className="text-[8px] neon-purple">TAP A CARD TO SELECT</span>
+          <span className="text-[8px] neon-purple">TAP CARDS TO SELECT</span>
         )}
-        {phase === 'play' && !drawnFromDiscard && selectedCards.length > 0 && (
+        {phase === 'play' && !drawnFromDiscard && selectedCards.length > 0 && hasExtendableMeld && (
+          <span className="text-[8px] neon-teal animate-pulse">TAP GLOWING MELD TO ADD CARDS</span>
+        )}
+        {phase === 'play' && !drawnFromDiscard && selectedCards.length > 0 && !hasExtendableMeld && (
           <span className="text-[8px] neon-purple">MELD, DISCARD, OR SELECT MORE</span>
         )}
         {phase === 'play' && drawnFromDiscard && (

@@ -18,11 +18,14 @@ export function computeAITurn(state: GameState): GameAction[] {
   let drawnCard: Card | null = null;
 
   if (topDiscard) {
-    // Check if taking the top discard card completes a meld with 2 cards from hand
+    // Draw from discard if it forms a new meld with hand cards
     const meldable = findValidMelds([topDiscard, ...hand]).some(
       subset => subset.some(c => c.id === topDiscard.id) && subset.length >= 3
     );
-    if (meldable) {
+    // Also draw if it extends an existing meld on the table
+    const extendsExisting = state.melds.some(meld => canExtendMeld(meld, [topDiscard]));
+
+    if (meldable || extendsExisting) {
       actions.push({ type: 'DRAW_FROM_DISCARD', cardId: topDiscard.id });
       drawnFromDiscard = true;
       drawnCard = topDiscard;
@@ -42,7 +45,8 @@ export function computeAITurn(state: GameState): GameAction[] {
   // ── Step 2: Meld decisions ─────────────────────────────────────
 
   const usedCardIds = new Set<string>();
-  const melds = [...state.melds];
+  // Simulate melds on table (track what's extendable after AI plays new melds)
+  const simulatedMelds: Meld[] = [...state.melds];
 
   // If drawn from discard, must meld drawnCard — find a meld containing it
   if (drawnFromDiscard && drawnCard) {
@@ -51,8 +55,19 @@ export function computeAITurn(state: GameState): GameAction[] {
     if (meldWithDrawn) {
       actions.push({ type: 'PLAY_MELD', cards: meldWithDrawn });
       meldWithDrawn.forEach(c => usedCardIds.add(c.id));
+    } else {
+      // Can't form a new meld — try extending an existing meld with the drawn card
+      const extendTarget = simulatedMelds.find(meld => canExtendMeld(meld, [drawnCard!]));
+      if (extendTarget) {
+        actions.push({ type: 'EXTEND_MELD', meldId: extendTarget.id, cards: [drawnCard] });
+        usedCardIds.add(drawnCard.id);
+        // Update simulatedMelds to reflect extension
+        const idx = simulatedMelds.findIndex(m => m.id === extendTarget.id);
+        if (idx >= 0) {
+          simulatedMelds[idx] = { ...extendTarget, cards: [...extendTarget.cards, drawnCard] };
+        }
+      }
     }
-    // If no meld found (shouldn't happen since we only draw from discard if meldable), fallback handled at discard step
   }
 
   // Greedily find more melds from remaining hand
@@ -71,16 +86,22 @@ export function computeAITurn(state: GameState): GameAction[] {
     }
   }
 
-  // Try to extend existing melds
-  for (const meld of melds) {
-    const extendCards = remainingHand.filter(c => canExtendMeld(meld, [c]));
-    if (extendCards.length > 0) {
-      // Try to extend with as many as possible
-      const validExtension = extendCards.filter(c => canExtendMeld(meld, [c]));
-      if (validExtension.length > 0) {
-        actions.push({ type: 'EXTEND_MELD', meldId: meld.id, cards: [validExtension[0]] });
-        usedCardIds.add(validExtension[0].id);
-        remainingHand = remainingHand.filter(c => !usedCardIds.has(c.id));
+  // Try to extend existing melds — iteratively, with ALL valid cards per meld
+  for (const meld of simulatedMelds) {
+    // Keep trying to add cards to this meld until no more fit
+    let currentMeld = meld;
+    let addedAny = true;
+    while (addedAny) {
+      addedAny = false;
+      // Find first card in remaining hand that can extend current meld
+      const extendCard = remainingHand.find(c => canExtendMeld(currentMeld, [c]));
+      if (extendCard) {
+        actions.push({ type: 'EXTEND_MELD', meldId: meld.id, cards: [extendCard] });
+        usedCardIds.add(extendCard.id);
+        remainingHand = remainingHand.filter(c => c.id !== extendCard.id);
+        // Update currentMeld so next iteration checks the extended version
+        currentMeld = { ...currentMeld, cards: [...currentMeld.cards, extendCard] };
+        addedAny = true;
       }
     }
   }
@@ -94,48 +115,53 @@ export function computeAITurn(state: GameState): GameAction[] {
     return actions;
   }
 
-  // Infer likely opponent (player) cards: deck is unknown, use visible info
-  const allKnownIds = new Set([
-    ...state.deck.map(c => c.id),
-    ...state.discardPile.map(c => c.id),
-    ...state.players.opponent.hand.map(c => c.id),
-    ...state.melds.flatMap(m => m.cards.map(c => c.id)),
-  ]);
-
-  // "Hot" cards: completing a partial run we infer the player is building
-  // Look for 2-card runs among visible cards not in our hand = likely player's
+  // "Hot" cards: extending existing melds — high value to keep
   const hotCardIds = new Set<string>();
-  // (Simplified: flag cards that would extend the existing melds at either end)
   for (const meld of state.melds) {
     if (meld.kind === 'run') {
       const sorted = [...meld.cards].sort((a, b) => rankIndex(a.rank) - rankIndex(b.rank));
-      // cards that extend high end
       const maxIdx = rankIndex(sorted[sorted.length - 1].rank);
-      // cards that extend low end
       const minIdx = rankIndex(sorted[0].rank);
       finalHand.forEach(c => {
         if (c.suit === meld.cards[0].suit) {
           const ci = rankIndex(c.rank);
           if (ci === maxIdx + 1 || ci === minIdx - 1) {
-            hotCardIds.add(c.id); // this extends the run — keep for ourselves, don't discard
+            hotCardIds.add(c.id);
           }
+        }
+      });
+    } else {
+      // Set: flag cards with matching rank that could extend
+      finalHand.forEach(c => {
+        if (c.rank === meld.cards[0].rank && canExtendMeld(meld, [c])) {
+          hotCardIds.add(c.id);
         }
       });
     }
   }
 
-  // Score each card: prefer discarding high-value cards that aren't useful
-  // Lower priority (discard later): cards that form partial melds or are "hot"
+  // Count partial-meld partners: more partners = more useful card
+  function partnerCount(card: Card): number {
+    let count = 0;
+    for (const other of finalHand) {
+      if (other.id === card.id) continue;
+      // Same rank = set partner
+      if (other.rank === card.rank) count++;
+      // Close rank same suit = run partner (within 2)
+      if (other.suit === card.suit && Math.abs(rankIndex(other.rank) - rankIndex(card.rank)) <= 2) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  // Score each card: higher score = more likely to discard
   const scored = finalHand.map(card => {
     const pts = cardPoints(card);
     const isHot = hotCardIds.has(card.id);
-    // Check if card forms a partial set/run with another hand card
-    const isPartial = finalHand.some(other => {
-      if (other.id === card.id) return false;
-      return other.rank === card.rank || (other.suit === card.suit && Math.abs(rankIndex(other.rank) - rankIndex(card.rank)) <= 2);
-    });
-    // Score: higher = more likely to discard
-    const score = pts - (isHot ? 20 : 0) - (isPartial ? 8 : 0);
+    const partners = partnerCount(card);
+    // Penalty per partner (more partners = keep it), and extra penalty if it's hot
+    const score = pts - (isHot ? 25 : 0) - partners * 5;
     return { card, score };
   });
 
