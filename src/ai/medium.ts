@@ -51,8 +51,12 @@ export function computeAITurn(state: GameState): GameAction[] {
     if (meldWithDrawn) {
       actions.push({ type: 'PLAY_MELD', cards: meldWithDrawn });
       meldWithDrawn.forEach(c => usedCardIds.add(c.id));
+    } else {
+      // Fallback: If no meld found with drawn card, mark it as used anyway to prevent invalid discard
+      // This prevents a stuck game state where AI can't discard the drawn card
+      // In practice, this means AI should avoid drawing from discard unless absolutely sure
+      usedCardIds.add(drawnCard.id);
     }
-    // If no meld found (shouldn't happen since we only draw from discard if meldable), fallback handled at discard step
   }
 
   // Greedily find more melds from remaining hand
