@@ -46,7 +46,9 @@ describe('DRAW_FROM_DISCARD — discard pile multi-card pickup', () => {
     expect(next.players.player.hand).toHaveLength(3);
     expect(next.players.player.hand.map(c => c.id)).toContain('9d');
     expect(next.turn.drawnCard?.id).toBe('9d');
-    expect(next.turn.drawnFromDiscard).toBe(true);
+    // Top-card draws: no meld required, so drawnFromDiscard=false
+    // But drawnCard is tracked to prevent immediate discard-back
+    expect(next.turn.drawnFromDiscard).toBe(false);
   });
 
   it('takes card from middle and everything above it', () => {
@@ -135,7 +137,8 @@ describe('DRAW_FROM_DISCARD — discard pile multi-card pickup', () => {
     expect(next.discardPile).toHaveLength(0);
     expect(next.players.player.hand).toHaveLength(3);
     expect(next.turn.drawnCard?.id).toBe('Ah');
-    expect(next.turn.drawnFromDiscard).toBe(true);
+    // Top-card draw (only card in pile): no meld required, so drawnFromDiscard=false
+    expect(next.turn.drawnFromDiscard).toBe(false);
   });
 });
 
