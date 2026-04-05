@@ -17,18 +17,18 @@ html, body, #root {
 }
 
 body {
-  background: #0a0a1a;
+  background: #0F172A;
   font-family: 'Press Start 2P', monospace;
-  color: #e2e8f0;
+  color: #F8FAFC;
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── Animated Plasma Background ──────────────────────────── */
+/* ── Animated Plasma Background (Balatro-inspired) ──────── */
 
 .game-bg {
   position: fixed;
   inset: 0;
-  background: #0a0a1a;
+  background: linear-gradient(135deg, #0F172A 0%, #1a2e4a 100%);
   z-index: 0;
 }
 
@@ -37,10 +37,10 @@ body {
   position: fixed;
   inset: -30%;
   background:
-    radial-gradient(ellipse at 20% 50%, rgba(124, 58, 237, 0.4) 0%, transparent 55%),
-    radial-gradient(ellipse at 80% 20%, rgba(59, 130, 246, 0.35) 0%, transparent 55%),
-    radial-gradient(ellipse at 60% 85%, rgba(236, 72, 153, 0.25) 0%, transparent 50%),
-    radial-gradient(ellipse at 10% 10%, rgba(52, 211, 153, 0.15) 0%, transparent 40%);
+    radial-gradient(ellipse at 20% 50%, rgba(212, 175, 55, 0.25) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 20%, rgba(124, 58, 237, 0.2) 0%, transparent 55%),
+    radial-gradient(ellipse at 60% 85%, rgba(249, 115, 22, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 10% 10%, rgba(16, 185, 129, 0.1) 0%, transparent 40%);
   animation: plasma 12s ease-in-out infinite alternate;
   pointer-events: none;
   z-index: 0;
@@ -80,48 +80,57 @@ body {
   flex-direction: column;
 }
 
-/* ── Neon text glow ─────────────────────────────────────── */
+/* ── Text Glow (Balatro-inspired) ───────────────────────── */
 
 .neon-purple {
-  color: #a855f7;
-  text-shadow: 0 0 6px rgba(168,85,247,0.9), 0 0 16px rgba(168,85,247,0.5);
+  color: #7C3AED;
+  text-shadow: 0 0 6px rgba(124, 58, 237, 0.9), 0 0 16px rgba(124, 58, 237, 0.5);
 }
 .neon-blue {
-  color: #60a5fa;
-  text-shadow: 0 0 6px rgba(96,165,250,0.9), 0 0 16px rgba(96,165,250,0.5);
+  color: #3b82f6;
+  text-shadow: 0 0 6px rgba(59, 130, 246, 0.9), 0 0 16px rgba(59, 130, 246, 0.5);
 }
 .neon-red {
-  color: #f87171;
-  text-shadow: 0 0 6px rgba(248,113,113,0.9), 0 0 16px rgba(248,113,113,0.5);
+  color: #F97316;
+  text-shadow: 0 0 6px rgba(249, 115, 22, 0.9), 0 0 16px rgba(249, 115, 22, 0.5);
 }
 .neon-teal {
-  color: #34d399;
-  text-shadow: 0 0 6px rgba(52,211,153,0.9), 0 0 16px rgba(52,211,153,0.5);
+  color: #10B981;
+  text-shadow: 0 0 6px rgba(16, 185, 129, 0.9), 0 0 16px rgba(16, 185, 129, 0.5);
 }
 .neon-pink {
-  color: #f472b6;
-  text-shadow: 0 0 6px rgba(244,114,182,0.9), 0 0 16px rgba(244,114,182,0.5);
+  color: #D4AF37;
+  text-shadow: 0 0 6px rgba(212, 175, 55, 0.9), 0 0 16px rgba(212, 175, 55, 0.5);
 }
 
-/* ── Neon button ─────────────────────────────────────────── */
+.gold-text {
+  color: #D4AF37;
+  text-shadow: 0 0 8px rgba(212, 175, 55, 0.8), 0 0 16px rgba(212, 175, 55, 0.4);
+}
+
+/* ── Balatro Button Styles ──────────────────────────────── */
 
 .btn-neon {
-  background: transparent;
-  border: 2px solid #a855f7;
-  color: #a855f7;
-  padding: 8px 16px;
+  background: rgba(124, 58, 237, 0.1);
+  border: 2px solid #7C3AED;
+  color: #D4AF37;
+  padding: 10px 16px;
   font-family: 'Press Start 2P', monospace;
   font-size: 10px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   text-transform: uppercase;
-  box-shadow: 0 0 8px rgba(168,85,247,0.4), inset 0 0 8px rgba(168,85,247,0.1);
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.4), inset 0 0 8px rgba(212, 175, 55, 0.1);
 }
 
 .btn-neon:hover:not(:disabled) {
-  background: rgba(168, 85, 247, 0.15);
-  box-shadow: 0 0 16px rgba(168,85,247,0.7), inset 0 0 12px rgba(168,85,247,0.2);
-  transform: translateY(-1px);
+  background: rgba(212, 175, 55, 0.15);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.7), inset 0 0 12px rgba(212, 175, 55, 0.2);
+  transform: scale(1.05);
+}
+
+.btn-neon:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .btn-neon:disabled {
@@ -129,30 +138,37 @@ body {
   cursor: not-allowed;
 }
 
+/* Green success button */
 .btn-neon-blue {
-  border-color: #60a5fa;
-  color: #60a5fa;
-  box-shadow: 0 0 8px rgba(96,165,250,0.4), inset 0 0 8px rgba(96,165,250,0.1);
+  border-color: #10B981;
+  color: #FFFBEB;
+  background: rgba(16, 185, 129, 0.15);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.5), inset 0 0 8px rgba(16, 185, 129, 0.1);
 }
 
 .btn-neon-blue:hover:not(:disabled) {
-  background: rgba(96, 165, 250, 0.15);
-  box-shadow: 0 0 16px rgba(96,165,250,0.7);
+  background: rgba(16, 185, 129, 0.25);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.8), inset 0 0 12px rgba(16, 185, 129, 0.2);
+  transform: scale(1.05);
 }
 
+/* Orange warning button */
 .btn-neon-green {
-  border-color: #34d399;
-  color: #34d399;
-  box-shadow: 0 0 8px rgba(52,211,153,0.4), inset 0 0 8px rgba(52,211,153,0.1);
+  border-color: #F97316;
+  color: #0F172A;
+  background: rgba(249, 115, 22, 0.15);
+  box-shadow: 0 0 12px rgba(249, 115, 22, 0.5), inset 0 0 8px rgba(249, 115, 22, 0.1);
 }
 
 .btn-neon-green:hover:not(:disabled) {
-  background: rgba(52, 211, 153, 0.15);
-  box-shadow: 0 0 16px rgba(52,211,153,0.7);
+  background: rgba(249, 115, 22, 0.25);
+  box-shadow: 0 0 20px rgba(249, 115, 22, 0.8), inset 0 0 12px rgba(249, 115, 22, 0.2);
+  transform: scale(1.05);
 }
 
-/* ── Scrollbar ───────────────────────────────────────────── */
+/* ── Scrollbar (Gold accent) ─────────────────────────────── */
 
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
-::-webkit-scrollbar-thumb { background: rgba(168,85,247,0.5); border-radius: 2px; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: rgba(31, 41, 55, 0.5); }
+::-webkit-scrollbar-thumb { background: rgba(212, 175, 55, 0.6); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(212, 175, 55, 0.9); }

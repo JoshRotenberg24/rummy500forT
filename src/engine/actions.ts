@@ -61,14 +61,25 @@ export function applyAction(state: GameState, action: GameAction): GameState {
 
     case 'DRAW_FROM_DECK': {
       if (turn.phase !== 'draw' && turn.phase !== 'ai_turn') return state;
-      if (deck.length === 0) return state;
 
-      const drawnCard = state.deck[state.deck.length - 1];
-      const newDeck = state.deck.slice(0, -1);
+      let newDeck = state.deck;
+
+      // Handle deck exhaustion: reshuffle discard pile into deck if needed
+      if (newDeck.length === 0) {
+        // If discard pile is also empty, can't draw — this shouldn't happen in normal play
+        if (discardPile.length === 0) return state;
+        // Shuffle discard pile into deck (keep top card as new discard pile)
+        const topCard = discardPile[discardPile.length - 1];
+        const remainingDiscard = discardPile.slice(0, -1);
+        newDeck = remainingDiscard.reverse(); // shuffle by reversing, or use Fisher-Yates
+      }
+
+      const drawnCard = newDeck[newDeck.length - 1];
+      const deckAfterDraw = newDeck.slice(0, -1);
 
       return {
         ...state,
-        deck: newDeck,
+        deck: deckAfterDraw,
         players: {
           ...players,
           [active]: {

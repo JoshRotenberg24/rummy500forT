@@ -29,66 +29,90 @@ export function TurnControls() {
   }
 
   return (
-    <div className="flex flex-col gap-2 px-4 py-2">
-      {/* Phase indicator */}
-      <div className="text-center">
-        {phase === 'draw' && <span className="text-[8px] neon-blue animate-pulse">DRAW A CARD</span>}
+    <div className="flex flex-col gap-2.5 px-4 py-2.5 bg-gradient-to-r from-gameBg-dark/50 via-gameBg-card/30 to-gameBg-dark/50 border-t border-gameAccent-gold/30 rounded-t-lg">
+      {/* Phase indicator - Main Message */}
+      <div className="text-center space-y-1">
+        {phase === 'draw' && (
+          <div>
+            <span className="text-[8px] neon-blue animate-pulse font-bold uppercase tracking-wide">🎴 DRAW A CARD</span>
+            <p className="text-[6px] text-gray-400 mt-0.5">Tap deck or discard pile</p>
+          </div>
+        )}
+
         {phase === 'play' && !drawnFromDiscard && selectedCards.length === 0 && (
-          <span className="text-[8px] neon-purple">TAP A CARD TO SELECT</span>
+          <div>
+            <span className="text-[8px] neon-purple font-bold uppercase tracking-wide">SELECT 3+ CARDS FOR MELD</span>
+            <p className="text-[6px] text-gray-400 mt-0.5">Set (same rank) or Run (sequential, same suit)</p>
+          </div>
         )}
+
         {phase === 'play' && !drawnFromDiscard && selectedCards.length > 0 && (
-          <span className="text-[8px] neon-purple">MELD, DISCARD, OR SELECT MORE</span>
+          <div>
+            <span className="text-[8px] gold-text font-bold uppercase tracking-wide">MELD • DISCARD • OR SELECT MORE</span>
+            <p className="text-[6px] text-gray-400 mt-0.5">{selectedCards.length} cards selected</p>
+          </div>
         )}
+
         {phase === 'play' && drawnFromDiscard && (
-          <span className="text-[8px] neon-pink animate-pulse">
-            MUST MELD {drawnCard?.rank}{drawnCard?.suit === 'hearts' ? '♥' : drawnCard?.suit === 'diamonds' ? '♦' : drawnCard?.suit === 'clubs' ? '♣' : '♠'} FIRST!
-          </span>
+          <div>
+            <span className="text-[8px] neon-red animate-pulse font-bold uppercase tracking-wide drop-shadow-lg">
+              ⚠️ MELD {drawnCard?.rank}{drawnCard?.suit === 'hearts' ? '♥' : drawnCard?.suit === 'diamonds' ? '♦' : drawnCard?.suit === 'clubs' ? '♣' : '♠'} FIRST
+            </span>
+            <p className="text-[6px] text-gray-300 mt-0.5">This card MUST be melded before any discard</p>
+          </div>
         )}
       </div>
 
-      {/* Selection info */}
+      {/* Selection validation feedback */}
       {selectedCards.length > 0 && (
-        <div className="text-center text-[7px] text-gray-400">
-          {selectedCards.length} card{selectedCards.length !== 1 ? 's' : ''} selected
+        <div className="text-center space-y-1">
+          <div className="text-[7px] text-gray-300">
+            {selectedCards.length} card{selectedCards.length !== 1 ? 's' : ''} selected
+          </div>
           {selectedCards.length >= 3 && (
-            <span className={`ml-2 ${isValidMeld(selectedCards) ? 'neon-teal' : 'neon-red'}`}>
-              {isValidMeld(selectedCards) ? '✓ VALID MELD' : '✗ INVALID'}
-            </span>
+            <div className={`text-[7px] font-bold uppercase ${isValidMeld(selectedCards) ? 'text-gameAccent-green' : 'text-gameAccent-orange'}`}>
+              {isValidMeld(selectedCards) ? '✓ VALID MELD' : '✗ INVALID - Need 3+ same rank OR 3+ sequential same suit'}
+            </div>
           )}
-          {selectedCards.length > 1 && phase === 'play' && (
-            <span className="ml-2 text-gray-600">· tap 1 card only to discard</span>
+          {selectedCards.length === 1 && (
+            <div className="text-[6px] text-gameAccent-orange">
+              👆 Ready to discard this card
+            </div>
           )}
         </div>
       )}
 
       {/* Action buttons */}
-      <div className="flex justify-center gap-3 flex-wrap">
+      <div className="flex justify-center gap-2.5 flex-wrap">
         {phase === 'play' && (
           <button
-            className="btn-neon btn-neon-green"
+            className="btn-neon-blue text-[8px] px-3 py-1.5 uppercase font-bold"
             onClick={handlePlayMeld}
             disabled={!canPlayMeld}
+            title={!canPlayMeld ? 'Select 3+ cards that form a valid meld' : 'Play selected cards as a meld'}
           >
-            MELD ({selectedCards.length})
+            ✓ MELD
           </button>
         )}
 
         {(phase === 'play' || phase === 'discard') && (
           <button
-            className="btn-neon btn-neon-blue"
+            className="btn-neon-green text-[8px] px-3 py-1.5 uppercase font-bold"
             onClick={handleDiscard}
             disabled={!canDiscard}
+            title={drawnFromDiscard && drawnCard ? `Must meld ${drawnCard.rank} first` : !canDiscard ? 'Select 1 card to discard' : 'Discard selected card'}
           >
-            DISCARD
+            💨 DISCARD
           </button>
         )}
 
         {selectedCards.length > 0 && (
           <button
-            className="btn-neon"
+            className="btn-neon text-[8px] px-3 py-1.5 uppercase font-bold border-gameAccent-purple"
             onClick={() => dispatch({ type: 'CLEAR_SELECTION' })}
+            title="Clear card selection"
           >
-            CLEAR
+            ✕ CLEAR
           </button>
         )}
       </div>
