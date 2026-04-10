@@ -10,6 +10,8 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@types/canvas-confetti": "^1.9.0",
+    "canvas-confetti": "^1.9.4",
     "framer-motion": "^11.3.0",
     "partykit": "^0.0.115",
     "partysocket": "^1.1.16",

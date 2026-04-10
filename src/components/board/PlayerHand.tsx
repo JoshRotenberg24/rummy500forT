@@ -3,20 +3,34 @@ import { useGameStore } from '../../store/gameStore';
 import { Card as CardType } from '../../engine/types';
 import { Card } from '../card/Card';
 
-function useCardLayout() {
+function useCardLayout(handCount: number) {
   const getLayout = () => {
     const wide = window.innerWidth >= 768;
     const tall = window.innerHeight >= 650;
-    return wide && tall
-      ? { cardSize: 'xl' as const, overlap: 52, cardWidth: 100, cardHeight: 140 }
-      : { cardSize: 'lg' as const, overlap: 34, cardWidth: 78, cardHeight: 110 };
+    const base = wide && tall
+      ? { cardSize: 'xl' as const, defaultOverlap: 52, cardWidth: 100, cardHeight: 140 }
+      : { cardSize: 'lg' as const, defaultOverlap: 34, cardWidth: 78, cardHeight: 110 };
+
+    const availableWidth = window.innerWidth - 32; // 16px padding each side
+    const maxOverlap = handCount > 1
+      ? Math.floor((availableWidth - base.cardWidth) / (handCount - 1))
+      : base.defaultOverlap;
+    const overlap = Math.max(15, Math.min(base.defaultOverlap, maxOverlap));
+
+    return { cardSize: base.cardSize, overlap, cardWidth: base.cardWidth, cardHeight: base.cardHeight };
   };
   const [layout, setLayout] = useState(getLayout);
   useEffect(() => {
     const onResize = () => setLayout(getLayout());
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
-  }, []);
+  }, [handCount]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Recompute whenever handCount changes (picking up many cards)
+  useEffect(() => {
+    setLayout(getLayout());
+  }, [handCount]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return layout;
 }
 
@@ -25,7 +39,6 @@ export function PlayerHand() {
   const dispatch = useGameStore(s => s.dispatch);
   const { hand } = state.players.player;
   const { phase, selectedCards, drawnCard, activePlayer } = state.turn;
-  const { cardSize, overlap, cardWidth, cardHeight } = useCardLayout();
 
   const isMyTurn = activePlayer === 'player';
   const canSelect = isMyTurn && (phase === 'play' || phase === 'discard');
@@ -33,6 +46,8 @@ export function PlayerHand() {
   const [orderedIds, setOrderedIds] = useState<string[]>(() => hand.map(c => c.id));
   const containerRef = useRef<HTMLDivElement>(null);
   const dragState = useRef<{ srcIdx: number; startX: number; moved: boolean } | null>(null);
+
+  const { cardSize, overlap, cardWidth, cardHeight } = useCardLayout(hand.length);
 
   useEffect(() => {
     setOrderedIds(prev => {
@@ -114,6 +129,7 @@ export function PlayerHand() {
                 isDrawnCard={isDrawn}
                 size={cardSize}
                 disabled={!canSelect}
+                layoutId={card.id}
               />
             </div>
           );

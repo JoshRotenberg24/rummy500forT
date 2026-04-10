@@ -3,9 +3,35 @@ import { useMultiplayerStore } from '../../store/multiplayerStore';
 import { Card as CardType, PlayerId, GamePhase } from '../../engine/types';
 import { Card } from '../card/Card';
 
-const OVERLAP = 34;
-const CARD_WIDTH = 78;
-const CARD_HEIGHT = 110;
+function useCardLayout(handCount: number) {
+  const getLayout = () => {
+    const wide = window.innerWidth >= 768;
+    const tall = window.innerHeight >= 650;
+    const base = wide && tall
+      ? { cardSize: 'xl' as const, defaultOverlap: 52, cardWidth: 100, cardHeight: 140 }
+      : { cardSize: 'lg' as const, defaultOverlap: 34, cardWidth: 78, cardHeight: 110 };
+
+    const availableWidth = window.innerWidth - 32;
+    const maxOverlap = handCount > 1
+      ? Math.floor((availableWidth - base.cardWidth) / (handCount - 1))
+      : base.defaultOverlap;
+    const overlap = Math.max(15, Math.min(base.defaultOverlap, maxOverlap));
+
+    return { cardSize: base.cardSize, overlap, cardWidth: base.cardWidth, cardHeight: base.cardHeight };
+  };
+  const [layout, setLayout] = useState(getLayout);
+  useEffect(() => {
+    const onResize = () => setLayout(getLayout());
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [handCount]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    setLayout(getLayout());
+  }, [handCount]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return layout;
+}
 
 interface Props {
   hand: CardType[];
@@ -16,14 +42,16 @@ interface Props {
   myPlayerId: PlayerId;
 }
 
-export function MultiplayerHand({ hand, isMyTurn, phase, selectedCards, drawnCard, myPlayerId }: Props) {
+export function MultiplayerHand({ hand, isMyTurn, phase, selectedCards, drawnCard }: Props) {
   const dispatch = useMultiplayerStore(s => s.dispatch);
+  const { cardSize, overlap, cardWidth, cardHeight } = useCardLayout(hand.length);
 
   const canSelect = isMyTurn && (phase === 'play' || phase === 'discard');
   const isSelected = (id: string) => selectedCards.some(c => c.id === id);
 
   const [orderedIds, setOrderedIds] = useState<string[]>(() => hand.map(c => c.id));
-  const dragSrcIdx = useRef<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const dragState = useRef<{ srcIdx: number; startX: number; moved: boolean } | null>(null);
 
   useEffect(() => {
     setOrderedIds(prev => {
@@ -35,18 +63,6 @@ export function MultiplayerHand({ hand, isMyTurn, phase, selectedCards, drawnCar
   }, [hand]);
 
   const orderedHand = orderedIds.map(id => hand.find(c => c.id === id)).filter(Boolean) as CardType[];
-
-  function handleCardClick(card: CardType) {
-    if (!canSelect) return;
-    if (isSelected(card.id)) {
-      dispatch({ type: 'DESELECT_CARD', cardId: card.id });
-    } else {
-      dispatch({ type: 'SELECT_CARD', card });
-    }
-  }
-
-  const containerRef = useRef<HTMLDivElement>(null);
-  const dragState = useRef<{ srcIdx: number; startX: number; moved: boolean } | null>(null);
 
   function handlePointerDown(e: React.PointerEvent<HTMLDivElement>, i: number) {
     dragState.current = { srcIdx: i, startX: e.clientX, moved: false };
@@ -60,7 +76,7 @@ export function MultiplayerHand({ hand, isMyTurn, phase, selectedCards, drawnCar
 
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    const target = Math.max(0, Math.min(orderedHand.length - 1, Math.floor(x / OVERLAP)));
+    const target = Math.max(0, Math.min(orderedHand.length - 1, Math.floor(x / overlap)));
     if (target !== dragState.current.srcIdx) {
       const newOrder = [...orderedIds];
       const [moved] = newOrder.splice(dragState.current.srcIdx, 1);
@@ -81,14 +97,14 @@ export function MultiplayerHand({ hand, isMyTurn, phase, selectedCards, drawnCar
     dragState.current = null;
   }
 
-  const totalWidth = orderedHand.length > 0 ? OVERLAP * (orderedHand.length - 1) + CARD_WIDTH : 0;
+  const totalWidth = orderedHand.length > 0 ? overlap * (orderedHand.length - 1) + cardWidth : 0;
 
   return (
-    <div className="relative flex flex-col items-center" style={{ minHeight: CARD_HEIGHT + 34 }}>
+    <div className="relative flex flex-col items-center" style={{ minHeight: cardHeight + 34 }}>
       <div
         ref={containerRef}
         className="relative"
-        style={{ width: totalWidth, height: CARD_HEIGHT, touchAction: 'none' }}
+        style={{ width: totalWidth, height: cardHeight, touchAction: 'none' }}
         onPointerMove={handlePointerMove}
       >
         {orderedHand.map((card, i) => {
@@ -99,7 +115,7 @@ export function MultiplayerHand({ hand, isMyTurn, phase, selectedCards, drawnCar
               key={card.id}
               style={{
                 position: 'absolute',
-                left: i * OVERLAP,
+                left: i * overlap,
                 top: 0,
                 zIndex: selected ? 20 : i + 1,
                 transition: 'transform 0.15s ease',
@@ -113,8 +129,9 @@ export function MultiplayerHand({ hand, isMyTurn, phase, selectedCards, drawnCar
                 card={card}
                 selected={selected}
                 isDrawnCard={isDrawn}
-                size="lg"
+                size={cardSize}
                 disabled={!canSelect}
+                layoutId={card.id}
               />
             </div>
           );

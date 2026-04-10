@@ -3,12 +3,15 @@
 .card {
   position: relative;
   border-radius: 8px;
-  /* Subtle lighter center so suit symbol is readable without glare */
   background:
-    radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.04) 0%, transparent 65%),
-    linear-gradient(145deg, #1e1b4b 0%, #13103a 100%);
-  border: 1.5px solid rgba(168, 85, 247, 0.35);
-  box-shadow: 0 0 10px rgba(168,85,247,0.3), 0 4px 12px rgba(0,0,0,0.5);
+    radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.07) 0%, transparent 60%),
+    linear-gradient(145deg, #1a1035 0%, #0d0920 100%);
+  border: 1.5px solid rgba(168, 85, 247, 0.45);
+  /* Inner highlight line for depth */
+  box-shadow:
+    0 0 10px rgba(168,85,247,0.3),
+    0 4px 12px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.08);
   overflow: hidden;
   cursor: pointer;
   user-select: none;
@@ -17,18 +20,27 @@
 }
 
 .card:hover {
-  box-shadow: 0 0 18px rgba(168,85,247,0.6), 0 6px 18px rgba(0,0,0,0.6);
+  box-shadow:
+    0 0 18px rgba(168,85,247,0.6),
+    0 6px 18px rgba(0,0,0,0.6),
+    inset 0 1px 0 rgba(255,255,255,0.12);
 }
 
 .card.selected {
-  border-color: rgba(52, 211, 153, 0.8);
-  box-shadow: 0 0 16px rgba(52,211,153,0.6), 0 6px 18px rgba(0,0,0,0.6);
+  border-color: rgba(52, 211, 153, 0.9);
+  box-shadow:
+    0 0 20px rgba(52,211,153,0.7),
+    0 8px 20px rgba(0,0,0,0.6),
+    inset 0 1px 0 rgba(52,211,153,0.2);
   transform: translateY(-12px);
 }
 
 .card.drawn-card {
-  border-color: rgba(251, 191, 36, 0.8);
-  box-shadow: 0 0 16px rgba(251,191,36,0.6);
+  border-color: rgba(251, 191, 36, 0.9);
+  box-shadow:
+    0 0 18px rgba(251,191,36,0.7),
+    0 4px 12px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(251,191,36,0.15);
 }
 
 /* ── Holographic shimmer overlay ────────────────────────── */
@@ -104,22 +116,22 @@
   left: 50%;
   transform: translate(-50%, -50%);
   line-height: 1;
-  opacity: 0.45;
+  opacity: 0.55;
 }
 
 .card-suit-small {
   line-height: 1;
 }
 
-/* Suit colors */
+/* Suit colors — traditional: red for hearts/diamonds, near-white for spades/clubs */
 .suit-red {
-  color: #f87171;
-  text-shadow: 0 0 5px rgba(248,113,113,0.7), 0 0 12px rgba(248,113,113,0.3);
+  color: #FF5555;
+  text-shadow: 0 0 6px rgba(255,85,85,0.8), 0 0 14px rgba(255,85,85,0.35);
 }
 
 .suit-black {
-  color: #34d399;
-  text-shadow: 0 0 5px rgba(52,211,153,0.7), 0 0 12px rgba(52,211,153,0.3);
+  color: #E8E8FF;
+  text-shadow: 0 0 5px rgba(200,200,255,0.6), 0 0 12px rgba(168,85,247,0.3);
 }
 
 /* ── Card back ───────────────────────────────────────────── */
