@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import './styles/globals.css';
-import { GameBoard } from './components/board/GameBoard';
+import { GameBoardWithToasts } from './components/board/GameBoard';
 import { HomeScreen } from './components/game/HomeScreen';
 import { LobbyScreen } from './components/game/LobbyScreen';
 import { MultiplayerGameBoard } from './components/board/MultiplayerGameBoard';
@@ -11,7 +11,7 @@ type Screen = 'home' | 'solo' | 'multiplayer';
 
 function GameWrapper({ onHome }: { onHome: () => void }) {
   useAI();
-  return <GameBoard onHome={onHome} />;
+  return <GameBoardWithToasts onHome={onHome} />;
 }
 
 function MultiplayerWrapper({ onBack }: { onBack: () => void }) {

@@ -1,4 +1,5 @@
 import { useGameStore } from '../../store/gameStore';
+import { useCountUp } from '../../hooks/useCountUp';
 
 interface Props {
   reset?: () => void;
@@ -9,9 +10,12 @@ export function ScoreBoard({ reset, onHome }: Props) {
   const state = useGameStore(s => s.state);
   const { players, round } = state;
 
+  const playerScore = useCountUp(players.player.score);
+  const opponentScore = useCountUp(players.opponent.score);
+
   // Calculate progress percentage (0-100)
-  const playerProgress = Math.min((players.player.score / 500) * 100, 100);
-  const opponentProgress = Math.min((players.opponent.score / 500) * 100, 100);
+  const playerProgress = Math.min((playerScore / 500) * 100, 100);
+  const opponentProgress = Math.min((opponentScore / 500) * 100, 100);
 
   return (
     <div className="flex items-center justify-between px-3 py-2 border-b-2 border-gameAccent-gold bg-gradient-to-r from-gameBg-dark via-gameBg-card to-gameBg-dark">
@@ -24,7 +28,7 @@ export function ScoreBoard({ reset, onHome }: Props) {
         <div>
           <span className="text-[6px] text-gray-500 block mb-0.5">SCORE</span>
           <div className="flex items-baseline gap-1">
-            <span className="text-[13px] neon-teal drop-shadow-lg">{players.player.score}</span>
+            <span className="text-[13px] neon-teal drop-shadow-lg">{playerScore}</span>
             <span className="text-[6px] text-gray-400">/500</span>
           </div>
         </div>
@@ -53,7 +57,7 @@ export function ScoreBoard({ reset, onHome }: Props) {
           <span className="text-[6px] text-gray-500 block mb-0.5">OPP SCORE</span>
           <div className="flex items-baseline justify-end gap-1">
             <span className="text-[6px] text-gray-400">/500</span>
-            <span className="text-[13px] neon-red drop-shadow-lg">{players.opponent.score}</span>
+            <span className="text-[13px] neon-red drop-shadow-lg">{opponentScore}</span>
           </div>
         </div>
         {/* Progress Bar */}

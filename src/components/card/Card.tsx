@@ -12,6 +12,7 @@ interface CardProps {
   onClick?: () => void;
   disabled?: boolean;
   style?: React.CSSProperties;
+  layoutId?: string;
 }
 
 const SIZE_STYLES = {
@@ -21,7 +22,7 @@ const SIZE_STYLES = {
   xl: { width: 100, height: 140, rankSize: 21, suitCenterSize: 58 },
 };
 
-export function Card({ card, selected, isDrawnCard, hologram, size = 'md', onClick, disabled, style }: CardProps) {
+export function Card({ card, selected, isDrawnCard, hologram, size = 'md', onClick, disabled, style, layoutId }: CardProps) {
   const dim = SIZE_STYLES[size];
   const colorClass = suitColorClass(card.suit);
 
@@ -33,6 +34,8 @@ export function Card({ card, selected, isDrawnCard, hologram, size = 'md', onCli
       whileHover={!disabled ? { scale: 1.04 } : undefined}
       whileTap={!disabled ? { scale: 0.97 } : undefined}
       layout
+      layoutId={layoutId}
+      transition={{ layout: { duration: 0.3, type: 'spring', stiffness: 300, damping: 30 } }}
     >
       <div className="card-shimmer" />
       <div className="card-inner">
